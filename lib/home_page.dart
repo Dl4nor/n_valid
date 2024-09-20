@@ -17,12 +17,45 @@ class HomePageState extends State<HomePage>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const TextWithBorder(text: 'N. Valid', font: 'crash-a-like', size: 40, color: Colors.orange),
+        title: const TextWithBorder(text: 'N. Valid', font: 'crash-a-like', size: 50, color: Color.fromARGB(198, 0, 255, 162)),
         backgroundColor: Colors.green,
+        actions: [
+          CustomSwitch(),
+        ],
       ),
       
-      body: Center(
-        child: CustomSwitch()
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Contador $counter'),
+            Container(height: 10),
+            CustomSwitch(),
+            Container(height: 50),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.black,
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.black,
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.black,
+                ),
+              ],
+            )
+          ],
+        ),
       ),
 
       floatingActionButton: FloatingActionButton(
@@ -44,10 +77,10 @@ class CustomSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Switch(
-            value: AppController.instance.isDarkTheme, 
-            onChanged: (value) {
-              AppController.instance.changeTheme();
-            },
+              value: AppController.instance.isDarkTheme, 
+              onChanged: (value) {
+                AppController.instance.changeTheme();
+              },
            );
   }
 }
@@ -75,8 +108,8 @@ class TextWithBorder extends StatelessWidget {
                                 fontSize: size,
                                 foreground: Paint()
                                   ..style = PaintingStyle.stroke
-                                  ..strokeWidth = 2 // Tamanho da borda
-                                  ..color = borderColor, // Cor da borda
+                                  ..strokeWidth = 2
+                                  ..color = borderColor,
                                 )
                   ),
                   Text(text, 
@@ -86,7 +119,7 @@ class TextWithBorder extends StatelessWidget {
                                   color: color
                                 ),
                   )
-                ]
+           ]
     );
   }
 }
