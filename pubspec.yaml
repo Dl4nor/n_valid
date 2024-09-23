@@ -30,9 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_translate: ^0.0.6  # ou a versão mais recente
-  # ou
-  translator: ^1.0.0  # se preferir usar o pacote translator
+  provider: ^6.0.0 
+  deepl_dart: ^1.4.0 
   
 
 

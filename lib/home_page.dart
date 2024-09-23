@@ -1,29 +1,45 @@
 import 'package:flutter/material.dart';
-
 import 'app_controller.dart';
+import 'settings_page.dart'; // Importa a página de configurações
 
-class HomePage extends StatefulWidget{
-
+class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() {
     return HomePageState();
   }
 }
 
-class HomePageState extends State<HomePage>{
+class HomePageState extends State<HomePage> {
   int counter = 0;
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const TextWithBorder(text: 'N. Valid', font: 'crash-a-like', size: 50, color: Color.fromARGB(198, 0, 255, 162)),
+        title: const TextWithBorder(
+          text: 'N. Valid',
+          font: 'crash-a-like',
+          size: 50,
+          color: Color.fromARGB(198, 0, 255, 162),
+        ),
         backgroundColor: Colors.green,
         actions: [
           CustomSwitch(),
+          IconButton(
+            icon: Image.asset(
+              '../src/gear.png', // Caminho da sua imagem de engrenagem
+              width: 30, // Ajuste o tamanho conforme necessário
+              height: 30,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+          ),
         ],
       ),
-      
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -37,89 +53,76 @@ class HomePageState extends State<HomePage>{
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  color: Colors.black,
-                ),
-                Container(
-                  width: 50,
-                  height: 50,
-                  color: Colors.black,
-                ),
-                Container(
-                  width: 50,
-                  height: 50,
-                  color: Colors.black,
-                ),
+                Container(width: 50, height: 50, color: Colors.black),
+                Container(width: 50, height: 50, color: Colors.black),
+                Container(width: 50, height: 50, color: Colors.black),
               ],
-            )
+            ),
           ],
         ),
       ),
-
       floatingActionButton: FloatingActionButton(
-        onPressed: (){
+        onPressed: () {
           setState(() {
             counter++;
           });
-        } , 
+        },
         child: const Icon(Icons.add),
       ),
     );
-   
   }
-
 }
 
 class CustomSwitch extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return Switch(
-              value: AppController.instance.isDarkTheme, 
-              onChanged: (value) {
-                AppController.instance.changeTheme();
-              },
-           );
+      value: AppController.instance.isDarkTheme,
+      onChanged: (value) {
+        AppController.instance.changeTheme();
+      },
+    );
   }
 }
 
 class TextWithBorder extends StatelessWidget {
-  
   final String text;
   final String font;
   final double size;
   final Color color;
   final Color borderColor;
 
-  const TextWithBorder({super.key, required this.text, 
-                                   this.font = '', 
-                                   required this.size, 
-                                   this.color = Colors.black, 
-                                   this.borderColor = Colors.black});
+  const TextWithBorder({
+    super.key,
+    required this.text,
+    this.font = '',
+    required this.size,
+    this.color = Colors.black,
+    this.borderColor = Colors.black,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
-                  Text(text, 
-                        style: TextStyle(
-                                fontFamily: font, 
-                                fontSize: size,
-                                foreground: Paint()
-                                  ..style = PaintingStyle.stroke
-                                  ..strokeWidth = 2
-                                  ..color = borderColor,
-                                )
-                  ),
-                  Text(text, 
-                        style: TextStyle(
-                                  fontFamily: font, 
-                                  fontSize: size,
-                                  color: color
-                                ),
-                  )
-           ]
-    );
+      Text(
+        text,
+        style: TextStyle(
+          fontFamily: font,
+          fontSize: size,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2
+            ..color = borderColor,
+        ),
+      ),
+      Text(
+        text,
+        style: TextStyle(
+          fontFamily: font,
+          fontSize: size,
+          color: color,
+        ),
+      )
+    ]);
   }
 }

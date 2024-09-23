@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/home_page.dart';
+import 'language_provider.dart'; // Importa o LanguageProvider
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,12 +12,38 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   String email = '';
   String password = '';
 
   @override
   Widget build(BuildContext context) {
+    // Obtém o idioma atual do LanguageProvider
+    String currentLanguage = Provider.of<LanguageProvider>(context).selectedLanguage;
+
+    // Define textos com base no idioma atual
+    String emailLabel;
+    String passwordLabel;
+    String loginButtonText;
+
+    switch (currentLanguage) {
+      case 'pt':
+        emailLabel = 'Email';
+        passwordLabel = 'Senha';
+        loginButtonText = 'Entrar';
+        break;
+      case 'es':
+        emailLabel = 'Correo electrónico';
+        passwordLabel = 'Contraseña';
+        loginButtonText = 'Iniciar sesión';
+        break;
+      case 'en':
+      default:
+        emailLabel = 'Email';
+        passwordLabel = 'Password';
+        loginButtonText = 'Login';
+        break;
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         child: SizedBox(
@@ -28,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-        
                 SizedBox(
                   width: 300,
                   height: 300,
@@ -39,50 +64,37 @@ class _LoginPageState extends State<LoginPage> {
                            : Colors.black,
                   ),
                 ),
-
                 TextField(
                   onChanged: (text) {
                     email = text;
                   },
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: emailLabel, // Usando texto traduzido
                   ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
-        
+                const SizedBox(height: 10),
                 TextField(
                   onChanged: (text) {
                     password = text;
                   },
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Password',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: passwordLabel, // Usando texto traduzido
                   ),
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
-        
+                const SizedBox(height: 15),
                 ElevatedButton(
                   onPressed: () {
-                    if(email == 'dante_espec@gmail.com' && password == '123'){
-
-                      // Navigator.of(context).pushReplacement(
-                      //   MaterialPageRoute(builder: (context) => HomePage())
-                      // );
-                      
+                    if (email == 'dante_espec@gmail.com' && password == '123') {
                       Navigator.of(context).pushReplacementNamed('/home');
-
                     } else {
                       print('ERROUUUUUU!!!!!');
                     }
                   }, 
-                  child: const Text('Entrar')
+                  child: Text(loginButtonText) // Usando texto traduzido
                 )
               ],
             ),
