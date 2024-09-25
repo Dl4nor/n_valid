@@ -87,7 +87,8 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.of(context).pushReplacementNamed('/home');
 
                     } else {
-                      print('ERROUUUUUU!!!!!');
+                      
+                      // print('ERROUUUUUU!!!!!');
                     }
                   }, 
                   child: const Text('Entrar')

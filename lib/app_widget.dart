@@ -22,10 +22,10 @@ class AppWidget extends StatelessWidget{
           ),
           initialRoute: '/',
           routes: {
-            '/': (context) => LoginPage(),
-            '/home': (context) => HomePage(),
-            '/tinder': (context) => TinderPage(),
-            '/storage': (context) => StoragePage()
+            '/': (context) => const LoginPage(),
+            '/home': (context) => const HomePage(),
+            '/tinder': (context) => const TinderPage(),
+            '/storage': (context) => const StoragePage()
           }
         )
     );
@@ -72,6 +72,8 @@ class TextWithBorder extends StatelessWidget {
 }
 
 class CustomSwitch extends StatelessWidget {
+  const CustomSwitch({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -91,21 +93,19 @@ class OurAppBar extends AppBar {
   OurAppBar({super.key, required this.textTitle});
 
   @override
-  State<OurAppBar> createState() => _OurAppBarState(text: textTitle);
+  State<OurAppBar> createState() => _OurAppBarState();
 }
 
 class _OurAppBarState extends State<OurAppBar> {
 
-  final String text;
-
-  _OurAppBarState({required this.text});
+  get text => widget.textTitle;
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
         title: TextWithBorder(text: text, font: 'crash-a-like', size: 50, color: const Color.fromARGB(196, 0, 255, 166)),
         backgroundColor: Colors.green,
-        actions: [
+        actions: const [
           CustomSwitch(),
         ],
       );
@@ -121,42 +121,42 @@ class OurDrawer extends Drawer {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: Color.fromARGB(255, 0, 245, 114)),
+              decoration: const BoxDecoration(color: Color.fromARGB(255, 0, 245, 114)),
               currentAccountPicture: ClipRRect(
                                         borderRadius: BorderRadius.circular(50),
                                         child: Image.asset('../assets/images/ProfilePic.jpg')
                                      ),
-              accountName: Text('Dante Espec'), 
-              accountEmail: Text('dante_espec@gmail.com')
+              accountName: const Text('Dante Espec'), 
+              accountEmail: const Text('dante_espec@gmail.com')
             ),
             ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Home'),
-              subtitle: Text('Menu Inicial'),
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              subtitle: const Text('Menu Inicial'),
               onTap: () {
                 Navigator.of(context).pushReplacementNamed('/home');
               },
             ),
             ListTile(
-              leading: Icon(Icons.storage),
-              title: Text('Estoque'),
-              subtitle: Text('Estoque de Produtos'),
+              leading: const Icon(Icons.storage),
+              title: const Text('Estoque'),
+              subtitle: const Text('Estoque de Produtos'),
               onTap: () {
                 Navigator.of(context).pushNamed('/storage');
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Configurações'),
-              subtitle: Text('Menu de configurações'),
+              leading: const Icon(Icons.settings),
+              title: const Text('Configurações'),
+              subtitle: const Text('Menu de configurações'),
               onTap: () {
                 Navigator.of(context).pushReplacementNamed('/home');
               },
             ),
             ListTile(
-              leading: Icon(Icons.exit_to_app),
-              title: Text('Logout'),
-              subtitle: Text('Sair'),
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Logout'),
+              subtitle: const Text('Sair'),
               onTap: () {
                 Navigator.of(context).pushReplacementNamed('/');
               },

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:n_valid/app_widget.dart';
 
 class HomePage extends StatefulWidget{
+  const HomePage({super.key});
+
 
   @override
   State<HomePage> createState() {
@@ -18,7 +20,7 @@ class HomePageState extends State<HomePage>{
       drawer: const OurDrawer(),
       appBar: OurAppBar(textTitle: 'N. Valid',),
       
-      body: Container(
+      body: SizedBox(
         width: double.infinity,
         height: double.infinity,
         child: Column(
@@ -26,7 +28,7 @@ class HomePageState extends State<HomePage>{
           children: [
             Text('Contador $counter'),
             Container(height: 10),
-            CustomSwitch(),
+            const CustomSwitch(),
             Container(height: 50),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,

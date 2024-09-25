@@ -12,7 +12,7 @@ class _StoragePageState extends State<StoragePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: OurDrawer(),
+      drawer: const OurDrawer(),
       appBar: OurAppBar(textTitle: 'N. Stock'),
     );
   }
