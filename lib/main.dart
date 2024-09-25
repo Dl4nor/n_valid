@@ -6,6 +6,7 @@ main() {
   runApp(DevicePreview(
           enabled: true,
           builder: (context) => const AppWidget(),
-        ));
+        )
+  );
 }
   

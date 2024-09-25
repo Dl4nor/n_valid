@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/login_page.dart';
+import 'package:n_valid/tinder_page.dart';
 
 import 'home_page.dart';
 
@@ -22,7 +23,7 @@ class AppWidget extends StatelessWidget{
           routes: {
             '/': (context) => LoginPage(),
             '/home': (context) => HomePage(),
-
+            '/tinder': (context) => TinderPage()
           }
         )
     );
