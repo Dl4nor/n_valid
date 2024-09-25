@@ -121,7 +121,6 @@ class _LoginPageState extends State<LoginPage> {
                             begin: Alignment.bottomRight,
                             end: Alignment.topLeft
                           )
-      
             )
           ),
           _body(),

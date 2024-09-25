@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n_valid/login_page.dart';
 
 import 'app_controller.dart';
 
@@ -16,6 +17,53 @@ class HomePageState extends State<HomePage>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(color: Color.fromARGB(255, 0, 245, 114)),
+              currentAccountPicture: ClipRRect(
+                                        borderRadius: BorderRadius.circular(50),
+                                        child: Image.asset('../assets/images/ProfilePic.jpg')
+                                     ),
+              accountName: const Text('Dante Espec'), 
+              accountEmail: const Text('dante_espec@gmail.com')
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              subtitle: const Text('Menu Inicial'),
+              onTap: () {
+                Navigator.of(context).pushReplacementNamed('/home');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.storage),
+              title: const Text('Estoque'),
+              subtitle: const Text('Estoque de Produtos'),
+              onTap: () {
+                Navigator.of(context).pushReplacementNamed('/home');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configurações'),
+              subtitle: const Text('Menu de configurações'),
+              onTap: () {
+                Navigator.of(context).pushReplacementNamed('/home');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Logout'),
+              subtitle: const Text('Sair'),
+              onTap: () {
+                Navigator.of(context).pushReplacementNamed('/');
+              },
+            )
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: const TextWithBorder(text: 'N. Valid', font: 'crash-a-like', size: 50, color: Color.fromARGB(198, 0, 255, 162)),
         backgroundColor: Colors.green,
