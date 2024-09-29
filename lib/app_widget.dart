@@ -72,17 +72,25 @@ class TextWithBorder extends StatelessWidget {
 class CustomSwitch extends StatelessWidget {
   const CustomSwitch({super.key});
 
-
   @override
   Widget build(BuildContext context) {
-    return Switch(
-              value: AppController.instance.isDarkTheme, 
-              onChanged: (value) {
-                AppController.instance.changeTheme();
-              },
-           );
+    return AnimatedBuilder(
+      animation: AppController.instance, 
+      builder: (context, child) {
+        return Switch(
+                value: AppController.instance.isDarkTheme, 
+                onChanged: (value) {
+                  AppController.instance.changeTheme();
+                  Navigator.pushReplacementNamed(context, '/home');
+                },
+        );
+      }
+    );
   }
 }
+
+          
+
 
 class OurAppBar extends AppBar {
 
