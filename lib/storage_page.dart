@@ -10,93 +10,119 @@ class StoragePage extends StatefulWidget {
 }
 
 class _StoragePageState extends State<StoragePage> {
-  List<bool> pressed = [false, false, false];
+  int isPressed = 0;
+  List<bool> pressed = [true, false, false];
+  List<String> textCategory = [
+    "❗Danger", 
+    "⚠️Caution", 
+    "✅Fine"
+  ];
+  List<Color> pressedColors = [
+    Colors.red,
+    Colors.yellow, 
+    Colors.green
+  ];
+  
+
+  void updatePressed(int index) {
+    setState(() {
+      for (int i = 0; i < pressed.length; i++) {
+        pressed[i] = false;
+      }
+      pressed[index] = true;
+      isPressed = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    
-    List<Color> pressedColors = [
-      const Color.fromARGB(255, 96, 26, 21), 
-      const Color.fromARGB(255, 111, 102, 26), 
-      const Color.fromARGB(255, 35, 80, 36)
-    ];
 
     return Scaffold(
       drawer: const OurDrawer(),
       appBar: OurAppBar(textTitle: 'N. Stock'),
-      body: Column(
+      body: Stack(
+        
         children: [
-          Container(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  height: MediaQuery.of(context).size.height,
+                  color: pressedColors[isPressed].withOpacity(0.3),
+                )
+              ],
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20), 
-                  color: pressed[0] 
-                        ? pressedColors[0] 
-                        : Colors.red
-                ),
-                width: 100,
-                height: 50,
-                child: TextButton(
-                  onPressed: (){
-                    setState(() {
-                      pressed[0] = true;
-                      pressed[1] = false;
-                      pressed[2] = false;
-                    });
-                  }, 
-                  child: const Text("❗Danger", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: pressed[1] ? pressedColors[1] : Colors.yellow),
-                width: 100,
-                height: 50,
-                child: TextButton(
-                  onPressed: (){
-                    setState(() {
-                      pressed[0] = false;
-                      pressed[1] = true;
-                      pressed[2] = false;
-                    });
-                  }, 
-                  child: const Text("⚠️Caution", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20), 
-                  color: pressed[2] 
-                        ? pressedColors[2] 
-                        : Colors.green,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      offset: const Offset(0, 0),
-                      blurRadius: 8,
-                      spreadRadius: 2,
-                    )
-                  ]
-                ),
-                width: 100,
-                height: 50,
-                child: TextButton(
-                  
-                  onPressed: (){
-                    setState(() {
-                      pressed[0] = false;
-                      pressed[1] = false;
-                      pressed[2] = true;
-                    });
-                  }, 
-                  child: const Text("✅Fine", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))
-                ),
+              Card(
+                margin: const EdgeInsets.all(0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+                elevation: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      for (int i = 0; i < pressed.length; i++)
+                        _SlideButton(
+                          text: textCategory[i], 
+                          color: pressedColors[i], 
+                          isPressed: pressed[i], 
+                          onPressed: () => updatePressed(i)
+                        )
+                    ],
+                  ),
               ),
             ],
+          ),
+        ]
+      ),
+    );
+  }
+  
+}
+
+class _SlideButton extends StatelessWidget {
+
+  final String text;
+  final Color color;
+  final bool isPressed;
+  final VoidCallback onPressed;
+
+  const _SlideButton({
+    required this.text,
+    required this.color, 
+    required this.isPressed,
+    required this.onPressed
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20), 
+        color: isPressed
+                ? color
+                : null
+      ),
+      width: 100,
+      height: 50,
+      child: TextButton(
+        onPressed: (){
+          onPressed();
+        }, 
+        child: Text(
+          text, 
+          style: TextStyle(
+            color: AppController.instance.isDarkTheme 
+                    ? Colors.white 
+                    : Colors.black, 
+            fontWeight: FontWeight.bold,
+            fontSize: 15
           )
-        ],
+        )
       ),
     );
   }
