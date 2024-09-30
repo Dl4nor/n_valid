@@ -10,13 +10,13 @@ class AppWidget extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: AppController.instance,
-      builder: (context, child) => MaterialApp(
+        animation: AppController.instance,
+        builder: (context, child) => MaterialApp(
           theme: ThemeData(
             primarySwatch: Colors.green,
             brightness: AppController.instance.isDarkTheme 
-            ? Brightness.dark 
-            : Brightness.light
+              ? Brightness.dark 
+              : Brightness.light 
           ),
           initialRoute: '/',
           routes: {

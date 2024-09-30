@@ -27,7 +27,7 @@ class HomePageState extends State<HomePage> {
           CustomSwitch(),
           IconButton(
             icon: Image.asset(
-              '../src/gear.png', // Caminho da sua imagem de engrenagem
+              'assets/images/gear.png', // Caminho da sua imagem de engrenagem
               width: 30, // Ajuste o tamanho conforme necessário
               height: 30,
             ),
