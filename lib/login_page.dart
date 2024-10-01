@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
+import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
 class LoginPage extends StatefulWidget {
@@ -113,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                       // print('ERROUUUUUU!!!!!');
                     }
                   }, 
-                  child: const Text('Entrar')
+                  child: Text(loginButtonText)
                 )
               ],
             ),
