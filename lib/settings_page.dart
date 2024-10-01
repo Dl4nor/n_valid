@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:deepl_dart/deepl_dart.dart';
+import 'package:n_valid/app_widget.dart';
 import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
@@ -40,8 +41,9 @@ class SettingsPageState extends State<SettingsPage> {
     String currentLanguage = Provider.of<LanguageProvider>(context).selectedLanguage;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(getAppBarTitle(currentLanguage)), // Usando título traduzido
+      drawer: const OurDrawer(),
+      appBar: OurAppBar(
+        textTitle: getAppBarTitle(currentLanguage), // Usando título traduzido
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
