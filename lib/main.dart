@@ -1,12 +1,31 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
-import 'app_widget.dart';
+import 'package:provider/provider.dart';
+import 'language_provider.dart'; // Importa o LanguageProvider
+import 'app_widget.dart'; // Importa sua AppWidget
 
-main() {
-  runApp(DevicePreview(
-          enabled: true,
-          builder: (context) => const AppWidget(),
-        )
+void main() {
+  runApp(
+    DevicePreview(
+      enabled: true, // Ativa o Device Preview
+      builder: (context) => ChangeNotifierProvider(
+        create: (context) => LanguageProvider(),
+        child: MyApp(), // Chama a classe MyApp
+      ),
+    ),
   );
 }
-  
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Validad',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: AppWidget(), // Aqui você pode apontar para a sua página inicial
+      // Adicione outras configurações, como rotas, se necessário
+    );
+  }
+}

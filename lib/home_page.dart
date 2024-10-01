@@ -12,9 +12,9 @@ class HomePage extends StatefulWidget{
   }
 }
 
-class HomePageState extends State<HomePage>{
+class HomePageState extends State<HomePage> {
   int counter = 0;
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,15 +72,14 @@ class HomePageState extends State<HomePage>{
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: (){
+        onPressed: () {
           setState(() {
             counter++;
           });
-        } , 
+        },
         child: const Icon(Icons.add),
       ),
     );
-   
   }
 
 }

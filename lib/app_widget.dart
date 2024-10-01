@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/login_page.dart';
+import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
 
 import 'home_page.dart';
@@ -23,7 +24,8 @@ class AppWidget extends StatelessWidget{
           routes: {
             '/': (context) => const LoginPage(),
             '/home': (context) => const HomePage(),
-            '/storage': (context) => const StoragePage()
+            '/storage': (context) => const StoragePage(),
+            '/settings': (context) => SettingsPage()
           }
         )
     );
@@ -156,7 +158,7 @@ class OurDrawer extends Drawer {
               title: const Text('Configurações'),
               subtitle: const Text('Menu de configurações'),
               onTap: () {
-                Navigator.of(context).pushReplacementNamed('/home');
+                Navigator.of(context).pushNamed('/settings');
               },
             ),
             ListTile(

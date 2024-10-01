@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:n_valid/app_controller.dart';
+import 'language_provider.dart'; // Importa o LanguageProvider
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,12 +11,38 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   String email = '';
   String password = '';
 
   Widget _body(){
-      return SingleChildScrollView(
+      // Obtém o idioma atual do LanguageProvider
+    String currentLanguage = Provider.of<LanguageProvider>(context).selectedLanguage;
+
+    // Define textos com base no idioma atual
+    String emailLabel;
+    String passwordLabel;
+    String loginButtonText;
+
+    switch (currentLanguage) {
+      case 'pt':
+        emailLabel = 'Email';
+        passwordLabel = 'Senha';
+        loginButtonText = 'Entrar';
+        break;
+      case 'es':
+        emailLabel = 'Correo electrónico';
+        passwordLabel = 'Contraseña';
+        loginButtonText = 'Iniciar sesión';
+        break;
+      case 'en':
+      default:
+        emailLabel = 'Email';
+        passwordLabel = 'Password';
+        loginButtonText = 'Login';
+        break;
+    }
+
+    return SingleChildScrollView(
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
@@ -33,7 +61,6 @@ class _LoginPageState extends State<LoginPage> {
                            : Colors.black,
                   ),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Card(
@@ -43,18 +70,15 @@ class _LoginPageState extends State<LoginPage> {
                         email = text;
                       },
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                        labelText: 'Email',
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                        labelText: emailLabel, // Usando texto traduzido
                       )
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
-        
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Card(
@@ -64,18 +88,15 @@ class _LoginPageState extends State<LoginPage> {
                         password = text;
                       },
                       obscureText: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                        labelText: 'Password',
+                        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                        labelText: passwordLabel, // Usando texto traduzido
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
-        
+                const SizedBox(height: 15),
                 ElevatedButton(
                   onPressed: () {
                     if(email == 'dante_espec@gmail.com' && password == '123'){
@@ -85,13 +106,12 @@ class _LoginPageState extends State<LoginPage> {
                       // );
                   
                       Navigator.of(context).pushReplacementNamed('/home');
-
                     } else {
                       
                       // print('ERROUUUUUU!!!!!');
                     }
                   }, 
-                  child: const Text('Entrar')
+                  child: Text(loginButtonText) // Usando texto traduzido
                 )
               ],
             ),
