@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  SettingsPageState createState() => SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class SettingsPageState extends State<SettingsPage> {
   final Map<String, String> languageCodes = {
     'Português': 'pt',
     'Espanhol': 'es',
@@ -45,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(getChooseLanguageText(currentLanguage), style: TextStyle(fontSize: 18)), // Usando texto traduzido
+            Text(getChooseLanguageText(currentLanguage), style: const TextStyle(fontSize: 18)), // Usando texto traduzido
             DropdownButton<String>(
               value: getLanguageName(currentLanguage), // Corrigido para usar o nome do idioma
               items: languageCodes.keys.map((String lang) {

@@ -10,13 +10,15 @@ void main() {
       enabled: true, // Ativa o Device Preview
       builder: (context) => ChangeNotifierProvider(
         create: (context) => LanguageProvider(),
-        child: MyApp(), // Chama a classe MyApp
+        child: const MyApp(), // Chama a classe MyApp
       ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: AppWidget(), // Aqui você pode apontar para a sua página inicial
+      home: const AppWidget(), // Aqui você pode apontar para a sua página inicial
       // Adicione outras configurações, como rotas, se necessário
     );
   }

@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                       },
                       obscureText: true,
                       decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                         border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
                         labelText: passwordLabel, // Usando texto traduzido
                       ),

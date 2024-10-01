@@ -25,7 +25,7 @@ class AppWidget extends StatelessWidget{
             '/': (context) => const LoginPage(),
             '/home': (context) => const HomePage(),
             '/storage': (context) => const StoragePage(),
-            '/settings': (context) => SettingsPage()
+            '/settings': (context) => const SettingsPage()
           }
         )
     );
