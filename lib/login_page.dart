@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:n_valid/app_controller.dart';
+import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
 class LoginPage extends StatefulWidget {
@@ -11,6 +11,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
   String email = '';
   String password = '';
 
@@ -51,6 +52,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+        
                 SizedBox(
                   width: 300,
                   height: 300,
@@ -106,12 +108,13 @@ class _LoginPageState extends State<LoginPage> {
                       // );
                   
                       Navigator.of(context).pushReplacementNamed('/home');
+
                     } else {
                       
                       // print('ERROUUUUUU!!!!!');
                     }
                   }, 
-                  child: Text(loginButtonText) // Usando texto traduzido
+                  child: Text(loginButtonText)
                 )
               ],
             ),
