@@ -44,7 +44,7 @@ class SettingsPageState extends State<SettingsPage> {
         title: Text(getAppBarTitle(currentLanguage)), // Usando título traduzido
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0), // Corrigido o padding
         child: Column(
           children: [
             Text(getChooseLanguageText(currentLanguage), style: const TextStyle(fontSize: 18)), // Usando texto traduzido
