@@ -1,8 +1,4 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/app_widget.dart';
 
@@ -26,7 +22,16 @@ class _StoragePageState extends State<StoragePage> {
     Colors.yellow, 
     Colors.green
   ];
-  
+
+  String today = "${DateTime.now().day} / ${DateTime.now().month} / ${DateTime.now().year}";
+
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+  }
 
   void updatePressed(int index) {
     setState(() {
@@ -35,6 +40,12 @@ class _StoragePageState extends State<StoragePage> {
       }
       pressed[index] = true;
       isPressed = index;
+      
+      _pageController.animateToPage(
+        index,  
+        duration: Durations.short2,
+        curve: Curves.easeInOut
+      );
     });
   }
 
@@ -47,42 +58,18 @@ class _StoragePageState extends State<StoragePage> {
       body: Stack(
         
         children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
-                  color: pressedColors[isPressed].withOpacity(0.3),
-                  child: Padding(
-                      padding: const EdgeInsets.all(0.0),
-                      child: Table(
-                        children: [
-                          for (int i=0;i<50;i++)
-                          TableRow(
-                            children: [
-                            Container(
-                              height: 40,
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
-                              child: const ImageIcon(AssetImage("../assets/images/box.png")),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(2), 
-                              child: Text("Yogurt", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(2), 
-                              child: Text("5 Dias", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
-                            )
-                            ]
-                          )
-                        ],
-                      ),
-                  ),
-                )
-              ],
-            ),
+          PageView(
+            controller: _pageController,
+            onPageChanged: (int index) {
+              setState(() {
+                updatePressed(index);
+              });
+            },
+            children: [
+              PageCategory(pressedColors: pressedColors, isPressed: 0, name: "Yogurte", days: 2),
+              PageCategory(pressedColors: pressedColors, isPressed: 1, name: "Leite Jussara 2L", days: 30),
+              PageCategory(pressedColors: pressedColors, isPressed: 2, name: "Arroz Tio João 5Kg", days: 197)
+            ],
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -151,10 +138,10 @@ class _StoragePageState extends State<StoragePage> {
                             showDatePicker(
                               context: context, 
                               initialDate: DateTime.now(),
-                              firstDate: DateTime(1990), 
+                              firstDate: DateTime.now(), 
                               lastDate: DateTime.now(),
                             );
-                          }, child: Text("DD / MM / AAAA"))
+                          }, child: Text(today))
                         ],
                       ),
                       Container(height: 10),
@@ -183,6 +170,64 @@ class _StoragePageState extends State<StoragePage> {
     );
   }
   
+}
+
+class PageCategory extends StatelessWidget {
+
+  final int isPressed;
+  final List<Color> pressedColors;
+  final String name;
+  final int days;
+
+  const PageCategory({
+    super.key, 
+    required this.pressedColors, 
+    required this.isPressed, 
+    required this.name, 
+    required this.days
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: pressedColors[isPressed].withOpacity(0.3),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Table(
+                        children: [
+                          for (int i=0;i<10;i++)
+                          TableRow(
+                            decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(width: 0.3))),
+                            children: [
+                            Container(
+                              height: 40,
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
+                              child: const ImageIcon(AssetImage("../assets/images/box.png")),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(2), 
+                              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(2), 
+                              child: Text('$days Dias', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
+                            )
+                            ]
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            );
+  }
 }
 
 class _SlideButton extends StatelessWidget {

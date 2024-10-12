@@ -82,16 +82,12 @@ class CustomSwitch extends StatelessWidget {
                 value: AppController.instance.isDarkTheme, 
                 onChanged: (value) {
                   AppController.instance.changeTheme();
-                  Navigator.pushReplacementNamed(context, '/home');
                 },
         );
       }
     );
   }
 }
-
-          
-
 
 class OurAppBar extends AppBar {
 
@@ -112,9 +108,6 @@ class _OurAppBarState extends State<OurAppBar> {
     return AppBar(
         title: TextWithBorder(text: text, font: 'crash-a-like', size: 50, color: const Color.fromARGB(196, 0, 255, 166)),
         backgroundColor: Colors.green,
-        actions: const [
-          CustomSwitch(),
-        ],
       );
   }
 }
@@ -133,8 +126,8 @@ class OurDrawer extends Drawer {
                                         borderRadius: BorderRadius.circular(50),
                                         child: Image.asset('../assets/images/ProfilePic.jpg')
                                      ),
-              accountName: const Text('Dante Espec'), 
-              accountEmail: const Text('dante_espec@gmail.com')
+              accountName: const Text('Dante Espec', style: TextStyle(color: Colors.black)), 
+              accountEmail: const Text('dante_espec@gmail.com', style: TextStyle(color: Colors.black))
             ),
             ListTile(
               leading: const Icon(Icons.home),
