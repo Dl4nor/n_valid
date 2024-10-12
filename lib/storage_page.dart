@@ -22,7 +22,16 @@ class _StoragePageState extends State<StoragePage> {
     Colors.yellow, 
     Colors.green
   ];
-  
+
+  String today = "${DateTime.now().day} / ${DateTime.now().month} / ${DateTime.now().year}";
+
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+  }
 
   void updatePressed(int index) {
     setState(() {
@@ -31,6 +40,12 @@ class _StoragePageState extends State<StoragePage> {
       }
       pressed[index] = true;
       isPressed = index;
+      
+      _pageController.animateToPage(
+        index,  
+        duration: Durations.short2,
+        curve: Curves.easeInOut
+      );
     });
   }
 
@@ -43,16 +58,18 @@ class _StoragePageState extends State<StoragePage> {
       body: Stack(
         
         children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  height: MediaQuery.of(context).size.height,
-                  color: pressedColors[isPressed].withOpacity(0.3),
-                )
-              ],
-            ),
+          PageView(
+            controller: _pageController,
+            onPageChanged: (int index) {
+              setState(() {
+                updatePressed(index);
+              });
+            },
+            children: [
+              PageCategory(pressedColors: pressedColors, isPressed: 0, name: "Yogurte", days: 2),
+              PageCategory(pressedColors: pressedColors, isPressed: 1, name: "Leite Jussara 2L", days: 30),
+              PageCategory(pressedColors: pressedColors, isPressed: 2, name: "Arroz Tio João 5Kg", days: 197)
+            ],
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -78,9 +95,139 @@ class _StoragePageState extends State<StoragePage> {
           ),
         ]
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: (){
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Cadastro de Produtos"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10.0),
+                        height: 150,
+                        width: 150,
+                        child: ElevatedButton(
+                          style: const ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(Color.fromARGB(255, 201, 201, 201)),
+                          ),
+                          onPressed: (){
+                            
+                          }, 
+                          child: const Icon(
+                            Icons.add_photo_alternate, 
+                            size: 60, 
+                            color: Color.fromARGB(255, 102, 102, 102),)
+                        ),
+                      ),
+                      const TextField(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                          labelText: "Nome do produto"
+                        )
+                      ),
+                      Container(height: 10),
+                      Row(
+                        children: [
+                          Text("Entrada:   ", style: TextStyle(fontSize: 16)),
+                          Container(width: 10),
+                          ElevatedButton(onPressed: (){
+                            showDatePicker(
+                              context: context, 
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(), 
+                              lastDate: DateTime.now(),
+                            );
+                          }, child: Text(today))
+                        ],
+                      ),
+                      Container(height: 10),
+                      Row(
+                        children: [
+                          Text("Validade: ", style: TextStyle(fontSize: 16)),
+                          Container(width: 10),
+                          ElevatedButton(onPressed: (){
+                            showDatePicker(
+                              context: context, 
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1990), 
+                              lastDate: DateTime.now()
+                            );
+                          }, child: Text("DD / MM / AAAA"))
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+            }
+          );
+        }, 
+        child: const Icon(Icons.add_shopping_cart)
+      ),
     );
   }
   
+}
+
+class PageCategory extends StatelessWidget {
+
+  final int isPressed;
+  final List<Color> pressedColors;
+  final String name;
+  final int days;
+
+  const PageCategory({
+    super.key, 
+    required this.pressedColors, 
+    required this.isPressed, 
+    required this.name, 
+    required this.days
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: pressedColors[isPressed].withOpacity(0.3),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Table(
+                        children: [
+                          for (int i=0;i<10;i++)
+                          TableRow(
+                            decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(width: 0.3))),
+                            children: [
+                            Container(
+                              height: 40,
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
+                              child: const ImageIcon(AssetImage("../assets/images/box.png")),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(2), 
+                              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(2), 
+                              child: Text('$days Dias', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
+                            )
+                            ]
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            );
+  }
 }
 
 class _SlideButton extends StatelessWidget {
