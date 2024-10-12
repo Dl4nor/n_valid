@@ -48,6 +48,7 @@ class SettingsPageState extends State<SettingsPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0), // Corrigido o padding
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(getChooseLanguageText(currentLanguage), style: const TextStyle(fontSize: 18)), // Usando texto traduzido
             DropdownButton<String>(
@@ -60,21 +61,26 @@ class SettingsPageState extends State<SettingsPage> {
               }).toList(),
               onChanged: onLanguageChanged,
             ),
+            Container(height: 20,),
+            Text(getThemeLanguageText(currentLanguage), style: const TextStyle(fontSize: 18),),
+            const CustomSwitch(),
           ],
         ),
       ),
     );
   }
 
+
+
   String getAppBarTitle(String code) {
     switch (code) {
       case 'pt':
-        return 'Configurações de Idioma';
+        return 'Configurações';
       case 'es':
-        return 'Configuración del Idioma';
+        return 'Configuración';
       case 'en':
       default:
-        return 'Language Settings';
+        return 'Settings';
     }
   }
 
@@ -87,6 +93,18 @@ class SettingsPageState extends State<SettingsPage> {
       case 'en':
       default:
         return 'Choose the language:';
+    }
+  }
+
+  String getThemeLanguageText(String code) {
+    switch (code) {
+      case 'pt':
+        return 'Tema Escuro:';
+      case 'es':
+        return 'Tema oscuro:';
+      case 'en':
+      default:
+        return 'Dark Theme:';
     }
   }
 

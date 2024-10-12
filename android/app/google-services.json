@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "731902350583",
+    "project_id": "n-valid",
+    "storage_bucket": "n-valid.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:731902350583:android:098d3157228eb8f9212ff2",
+        "android_client_info": {
+          "package_name": "com.NValid.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1mS0VaGjgI0xZkZVVqZExbePw56eEcd0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
