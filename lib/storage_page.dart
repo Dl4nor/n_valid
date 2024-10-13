@@ -24,7 +24,10 @@ class _StoragePageState extends State<StoragePage> {
   ];
 
   String today = "${DateTime.now().day} / ${DateTime.now().month} / ${DateTime.now().year}";
-
+  DateTime todayDate = DateTime.now();
+  String expiration = "DD / MM / AAAA";
+  int dias = 0;
+  late DateTime? expirationDate;
   late PageController _pageController;
 
   @override
@@ -100,6 +103,7 @@ class _StoragePageState extends State<StoragePage> {
           showDialog(
             context: context,
             builder: (BuildContext context) {
+              return StatefulBuilder(builder: (context, setStateDialog){
               return AlertDialog(
                 title: const Text("Cadastro de Produtos"),
                 content: Column(
@@ -134,14 +138,17 @@ class _StoragePageState extends State<StoragePage> {
                         children: [
                           Text("Entrada:   ", style: TextStyle(fontSize: 16)),
                           Container(width: 10),
-                          ElevatedButton(onPressed: (){
-                            showDatePicker(
-                              context: context, 
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(), 
-                              lastDate: DateTime.now(),
-                            );
-                          }, child: Text(today))
+                          ElevatedButton(
+                            onPressed: (){
+                              showDatePicker(
+                                context: context, 
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now(), 
+                                lastDate: DateTime.now(),
+                              );
+                            }, 
+                            child: Text(today)
+                          )
                         ],
                       ),
                       Container(height: 10),
@@ -153,16 +160,31 @@ class _StoragePageState extends State<StoragePage> {
                             showDatePicker(
                               context: context, 
                               initialDate: DateTime.now(),
-                              firstDate: DateTime(1990), 
-                              lastDate: DateTime.now()
-                            );
-                          }, child: Text("DD / MM / AAAA"))
+                              firstDate: DateTime.now(), 
+                              lastDate: DateTime(2200)
+                            ).then((selectedDate) {
+                                if(selectedDate != null){
+                                  setStateDialog(() {
+                                    expiration =
+                                      "${selectedDate.day.toString().padLeft(2, '0')} / "
+                                      "${selectedDate.month.toString().padLeft(2, '0')} / "
+                                      "${selectedDate.year}"; 
+                                    expirationDate = selectedDate;
+                                    // Essa parte conta os dias até um produto vencer 🏆:
+                                    dias = expirationDate!.difference(todayDate).inDays+1;
+                                    print("$dias");
+                                  });
+                                }
+                            });
+                          }, child: Text(expiration))
                         ],
                       ),
                     ],
                   ),
                 );
-            }
+              }
+              );
+              }
           );
         }, 
         child: const Icon(Icons.add_shopping_cart)
