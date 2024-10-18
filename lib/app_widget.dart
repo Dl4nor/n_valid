@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/home_page.dart';
 import 'package:n_valid/login_page.dart';
+import 'package:n_valid/register_page.dart';
 import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
 
@@ -19,9 +20,10 @@ class AppWidget extends StatelessWidget{
               ? Brightness.dark 
               : Brightness.light 
           ),
-          initialRoute: '/storage',
+          initialRoute: '/',
           routes: {
             '/': (context) => const LoginPage(),
+            '/register': (context) => const RegisterPage(),
             '/home': (context) => const HomePage(),
             '/storage': (context) => const StoragePage(),
             '/settings': (context) => const SettingsPage()
@@ -37,13 +39,15 @@ class TextWithBorder extends StatelessWidget {
   final String font;
   final double size;
   final Color color;
+  final FontWeight weight;
   final Color borderColor;
 
   const TextWithBorder({super.key, required this.text, 
                                    this.font = '', 
                                    required this.size, 
                                    this.color = Colors.black, 
-                                   this.borderColor = Colors.black});
+                                   this.borderColor = Colors.black, 
+                                   this.weight = FontWeight.normal});
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +56,7 @@ class TextWithBorder extends StatelessWidget {
                         style: TextStyle(
                                 fontFamily: font, 
                                 fontSize: size,
+                                fontWeight: weight,
                                 foreground: Paint()
                                   ..style = PaintingStyle.stroke
                                   ..strokeWidth = 2
@@ -62,6 +67,7 @@ class TextWithBorder extends StatelessWidget {
                         style: TextStyle(
                                   fontFamily: font, 
                                   fontSize: size,
+                                  fontWeight: weight,
                                   color: color
                                 ),
                   )
@@ -106,7 +112,7 @@ class _OurAppBarState extends State<OurAppBar> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        title: TextWithBorder(text: text, font: 'crash-a-like', size: 50, color: const Color.fromARGB(196, 0, 255, 166)),
+        title: TextWithBorder(text: text, font: 'crash-a-like', size: 60, color: const Color.fromARGB(196, 0, 255, 166)),
         backgroundColor: Colors.green,
       );
   }
@@ -117,6 +123,9 @@ class OurDrawer extends Drawer {
 
   @override
   Widget build(BuildContext context) {
+
+    final AppController appController;
+
     return Drawer(
         child: Column(
           children: [
