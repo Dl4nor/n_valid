@@ -181,12 +181,15 @@ class CustomTextField extends StatefulWidget {
   final bool isOcult;
   final Function(String) onChanged;
   final TextInputType textInputType;
+  final int? maxLength;
 
-  const CustomTextField({super.key, 
+  const CustomTextField({
+                         super.key, 
                          required this.labelText, 
                          this.isOcult = false,
                          required this.onChanged,
-                         this.textInputType = TextInputType.text
+                         this.textInputType = TextInputType.text,
+                         this.maxLength
                         });
 
   @override
@@ -198,10 +201,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
   get labelText => widget.labelText;
   get isOcult => widget.isOcult;
   get inputType => widget.textInputType;
+  get maxLen => widget.maxLength;
   late bool ifisOcult = isOcult;
-
+  
   @override
   Widget build(BuildContext context) {
+
+    final int? realMaxLen = inputType == TextInputType.phone ? 11 : maxLen;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -213,9 +220,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           obscuringCharacter: '✦',
           obscureText: ifisOcult,
           keyboardType: inputType,
-          inputFormatters: inputType == TextInputType.phone
+          inputFormatters: inputType == TextInputType.phone || inputType == TextInputType.number
                            ? [
-                            LengthLimitingTextInputFormatter(11),
+                            LengthLimitingTextInputFormatter(realMaxLen),
                             FilteringTextInputFormatter.digitsOnly
                            ]
                            : [],
