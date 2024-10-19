@@ -6,8 +6,6 @@ import 'app_widget.dart'; // Importa sua AppWidget
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-
-
 Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -30,11 +28,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Validad',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'made_carving_soft'
-      ),
-      home: const AppWidget(), // Aqui você pode apontar para a sua página inicial
+      home: AppWidget(), // Aqui você pode apontar para a sua página inicial
       // Adicione outras configurações, como rotas, se necessário
     );
   }

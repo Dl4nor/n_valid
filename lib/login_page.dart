@@ -17,7 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   String email = '';
   String password = '';
 
-  Widget _body(AppController appController){
+  Widget _body(){
       // Obtém o idioma atual do LanguageProvider
     String currentLanguage = Provider.of<LanguageProvider>(context).selectedLanguage;
 
@@ -112,19 +112,19 @@ class _LoginPageState extends State<LoginPage> {
                     autofocus: true,
                     style: ButtonStyle(
                       backgroundColor: WidgetStatePropertyAll(
-                        appController.isDarkTheme
+                        AppController.instance.isDarkTheme
                         ? Color.fromARGB(255, 30, 74, 44)
                         : Color.fromARGB(187, 56, 177, 107)
                       ),
                       foregroundColor: WidgetStatePropertyAll(
-                        appController.isDarkTheme
+                        AppController.instance.isDarkTheme
                         ? Colors.white
                         : Colors.black
                       ),
                       elevation: const WidgetStatePropertyAll(10)
                     ),
                     onPressed: () async{
-                      String result = await appController.LoginWithEmailPassword(email, password, context);
+                      String result = await AppController.instance.LoginWithEmailPassword(email, password, context);
                       setState(() {
                         errorMessage = result; // Atualiza a mensagem de erro
                       });
@@ -154,15 +154,12 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
-    final appController = AppController();
-
     return Scaffold(
       body: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
-              gradient: appController.isDarkTheme 
+              gradient: AppController.instance.isDarkTheme 
                         ? const LinearGradient(
                             colors: [Color.fromARGB(255, 52, 165, 44), Color.fromARGB(255, 34, 53, 40)],
                             stops: [0.25, 0.75],
@@ -177,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                           )
             )
           ),
-          _body(appController),
+          _body(),
         ],
       ),
     );

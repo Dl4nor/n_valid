@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/home_page.dart';
 import 'package:n_valid/login_page.dart';
@@ -15,10 +17,11 @@ class AppWidget extends StatelessWidget{
         animation: AppController.instance,
         builder: (context, child) => MaterialApp(
           theme: ThemeData(
+            fontFamily: 'carving_soft',
             primarySwatch: Colors.green,
             brightness: AppController.instance.isDarkTheme 
               ? Brightness.dark 
-              : Brightness.light 
+              : Brightness.light
           ),
           initialRoute: '/',
           routes: {
@@ -123,9 +126,6 @@ class OurDrawer extends Drawer {
 
   @override
   Widget build(BuildContext context) {
-
-    final AppController appController;
-
     return Drawer(
         child: Column(
           children: [
@@ -167,11 +167,79 @@ class OurDrawer extends Drawer {
               title: const Text('Logout'),
               subtitle: const Text('Sair'),
               onTap: () {
-                Navigator.of(context).pushReplacementNamed('/');
+                AppController.instance.Logout(context);
               },
             )
           ],
         ),
       );
+  }
+}
+
+class CustomTextField extends StatefulWidget {
+  final String labelText;
+  final bool isOcult;
+  final Function(String) onChanged;
+  final TextInputType textInputType;
+
+  const CustomTextField({super.key, 
+                         required this.labelText, 
+                         this.isOcult = false,
+                         required this.onChanged,
+                         this.textInputType = TextInputType.text
+                        });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+
+  get labelText => widget.labelText;
+  get isOcult => widget.isOcult;
+  get inputType => widget.textInputType;
+  late bool ifisOcult = isOcult;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+        child: TextField(
+          onChanged:(value){
+            widget.onChanged(value);
+          },
+          obscuringCharacter: '✦',
+          obscureText: ifisOcult,
+          keyboardType: inputType,
+          inputFormatters: inputType == TextInputType.phone
+                           ? [
+                            LengthLimitingTextInputFormatter(11),
+                            FilteringTextInputFormatter.digitsOnly
+                           ]
+                           : [],
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+            labelText: labelText,
+            suffixIcon: isOcult 
+            ? IconButton(
+                icon: Icon(
+                  ifisOcult
+                  ? Icons.visibility_off 
+                  : Icons.visibility,
+                ),
+                onPressed: (){
+                  setState(() {
+                    ifisOcult = !ifisOcult;
+                  });
+                },
+              )
+            : null
+          )
+        ),
+      ),
+    );
   }
 }
