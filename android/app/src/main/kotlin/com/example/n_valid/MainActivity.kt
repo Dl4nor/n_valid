@@ -1,4 +1,4 @@
-package com.example.n_valid
+package com.NValid.app
 
 import io.flutter.embedding.android.FlutterActivity
 

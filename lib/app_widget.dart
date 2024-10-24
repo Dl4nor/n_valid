@@ -182,6 +182,8 @@ class CustomTextField extends StatefulWidget {
   final Function(String) onChanged;
   final TextInputType textInputType;
   final int? maxLength;
+  final String? errorText;
+  final bool error;
 
   const CustomTextField({
                          super.key, 
@@ -189,7 +191,9 @@ class CustomTextField extends StatefulWidget {
                          this.isOcult = false,
                          required this.onChanged,
                          this.textInputType = TextInputType.text,
-                         this.maxLength
+                         this.maxLength,
+                         this.error = false,
+                         this.errorText
                         });
 
   @override
@@ -202,6 +206,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
   get isOcult => widget.isOcult;
   get inputType => widget.textInputType;
   get maxLen => widget.maxLength;
+  get inputError => widget.errorText;
+  get erro => widget.error;
   late bool ifisOcult = isOcult;
   
   @override
@@ -209,44 +215,66 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
     final int? realMaxLen = inputType == TextInputType.phone ? 11 : maxLen;
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-        shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-        child: TextField(
-          onChanged:(value){
-            widget.onChanged(value);
-          },
-          obscuringCharacter: '✦',
-          obscureText: ifisOcult,
-          keyboardType: inputType,
-          inputFormatters: inputType == TextInputType.phone || inputType == TextInputType.number
-                           ? [
-                            LengthLimitingTextInputFormatter(realMaxLen),
-                            FilteringTextInputFormatter.digitsOnly
-                           ]
-                           : [],
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-            labelText: labelText,
-            suffixIcon: isOcult 
-            ? IconButton(
-                icon: Icon(
-                  ifisOcult
-                  ? Icons.visibility_off 
-                  : Icons.visibility,
+    return 
+        Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                child: TextField(
+                  onChanged:(value){
+                    widget.onChanged(value);
+                  },
+                  obscuringCharacter: '✦',
+                  obscureText: ifisOcult,
+                  keyboardType: inputType,
+                  inputFormatters: inputType == TextInputType.phone || inputType == TextInputType.number
+                                   ? [
+                                    LengthLimitingTextInputFormatter(realMaxLen),
+                                    FilteringTextInputFormatter.digitsOnly
+                                   ]
+                                   : [],
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                    labelText: labelText,
+                    suffixIcon: isOcult 
+                    ? IconButton(
+                        icon: Icon(
+                          ifisOcult
+                          ? Icons.visibility_off 
+                          : Icons.visibility,
+                        ),
+                        onPressed: (){
+                          setState(() {
+                            ifisOcult = !ifisOcult;
+                          });
+                        },
+                      )
+                    : null
+                  )
                 ),
-                onPressed: (){
-                  setState(() {
-                    ifisOcult = !ifisOcult;
-                  });
-                },
-              )
-            : null
-          )
-        ),
-      ),
-    );
+              ),
+              if(erro)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: ErrorText(text: inputError),
+                )
+            ],
+          ),
+        );
+  }
+}
+
+class ErrorText extends StatelessWidget {
+  final String text;
+
+  const ErrorText({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: const TextStyle(color: Colors.red));
   }
 }
