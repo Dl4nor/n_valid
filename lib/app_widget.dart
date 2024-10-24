@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/home_page.dart';
 import 'package:n_valid/login_page.dart';
+import 'package:n_valid/register_page.dart';
 import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
 
@@ -14,14 +17,16 @@ class AppWidget extends StatelessWidget{
         animation: AppController.instance,
         builder: (context, child) => MaterialApp(
           theme: ThemeData(
+            fontFamily: 'carving_soft',
             primarySwatch: Colors.green,
             brightness: AppController.instance.isDarkTheme 
               ? Brightness.dark 
-              : Brightness.light 
+              : Brightness.light
           ),
-          initialRoute: '/storage',
+          initialRoute: '/',
           routes: {
             '/': (context) => const LoginPage(),
+            '/register': (context) => const RegisterPage(),
             '/home': (context) => const HomePage(),
             '/storage': (context) => const StoragePage(),
             '/settings': (context) => const SettingsPage()
@@ -37,13 +42,15 @@ class TextWithBorder extends StatelessWidget {
   final String font;
   final double size;
   final Color color;
+  final FontWeight weight;
   final Color borderColor;
 
   const TextWithBorder({super.key, required this.text, 
                                    this.font = '', 
                                    required this.size, 
                                    this.color = Colors.black, 
-                                   this.borderColor = Colors.black});
+                                   this.borderColor = Colors.black, 
+                                   this.weight = FontWeight.normal});
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +59,7 @@ class TextWithBorder extends StatelessWidget {
                         style: TextStyle(
                                 fontFamily: font, 
                                 fontSize: size,
+                                fontWeight: weight,
                                 foreground: Paint()
                                   ..style = PaintingStyle.stroke
                                   ..strokeWidth = 2
@@ -62,6 +70,7 @@ class TextWithBorder extends StatelessWidget {
                         style: TextStyle(
                                   fontFamily: font, 
                                   fontSize: size,
+                                  fontWeight: weight,
                                   color: color
                                 ),
                   )
@@ -106,7 +115,7 @@ class _OurAppBarState extends State<OurAppBar> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        title: TextWithBorder(text: text, font: 'crash-a-like', size: 50, color: const Color.fromARGB(196, 0, 255, 166)),
+        title: TextWithBorder(text: text, font: 'crash-a-like', size: 60, color: const Color.fromARGB(196, 0, 255, 166)),
         backgroundColor: Colors.green,
       );
   }
@@ -158,11 +167,114 @@ class OurDrawer extends Drawer {
               title: const Text('Logout'),
               subtitle: const Text('Sair'),
               onTap: () {
-                Navigator.of(context).pushReplacementNamed('/');
+                AppController.instance.Logout(context);
               },
             )
           ],
         ),
       );
+  }
+}
+
+class CustomTextField extends StatefulWidget {
+  final String labelText;
+  final bool isOcult;
+  final Function(String) onChanged;
+  final TextInputType textInputType;
+  final int? maxLength;
+  final String? errorText;
+  final bool error;
+
+  const CustomTextField({
+                         super.key, 
+                         required this.labelText, 
+                         this.isOcult = false,
+                         required this.onChanged,
+                         this.textInputType = TextInputType.text,
+                         this.maxLength,
+                         this.error = false,
+                         this.errorText
+                        });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+
+  get labelText => widget.labelText;
+  get isOcult => widget.isOcult;
+  get inputType => widget.textInputType;
+  get maxLen => widget.maxLength;
+  get inputError => widget.errorText;
+  get erro => widget.error;
+  late bool ifisOcult = isOcult;
+  
+  @override
+  Widget build(BuildContext context) {
+
+    final int? realMaxLen = inputType == TextInputType.phone ? 11 : maxLen;
+
+    return 
+        Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                child: TextField(
+                  onChanged:(value){
+                    widget.onChanged(value);
+                  },
+                  obscuringCharacter: '✦',
+                  obscureText: ifisOcult,
+                  keyboardType: inputType,
+                  inputFormatters: inputType == TextInputType.phone || inputType == TextInputType.number
+                                   ? [
+                                    LengthLimitingTextInputFormatter(realMaxLen),
+                                    FilteringTextInputFormatter.digitsOnly
+                                   ]
+                                   : [],
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                    labelText: labelText,
+                    suffixIcon: isOcult 
+                    ? IconButton(
+                        icon: Icon(
+                          ifisOcult
+                          ? Icons.visibility_off 
+                          : Icons.visibility,
+                        ),
+                        onPressed: (){
+                          setState(() {
+                            ifisOcult = !ifisOcult;
+                          });
+                        },
+                      )
+                    : null
+                  )
+                ),
+              ),
+              if(erro)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: ErrorText(text: inputError),
+                )
+            ],
+          ),
+        );
+  }
+}
+
+class ErrorText extends StatelessWidget {
+  final String text;
+
+  const ErrorText({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: const TextStyle(color: Colors.red));
   }
 }

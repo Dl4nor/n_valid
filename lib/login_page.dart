@@ -3,6 +3,7 @@ import 'package:n_valid/app_controller.dart';
 import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -11,7 +12,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
+  
+  String errorMessage = '';
   String email = '';
   String password = '';
 
@@ -52,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-        
                 SizedBox(
                   width: 300,
                   height: 300,
@@ -63,6 +64,11 @@ class _LoginPageState extends State<LoginPage> {
                            : Colors.black,
                   ),
                 ),
+                if (errorMessage.isNotEmpty) 
+                  Text(
+                    errorMessage, 
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)
+                  ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Card(
@@ -99,22 +105,44 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                ElevatedButton(
-                  onPressed: () {
-                    if(email == 'dante_espec@gmail.com' && password == '123'){
-
-                      // Navigator.of(context).pushReplacement(
-                      //   MaterialPageRoute(builder: (context) => HomePage())
-                      // );
-                  
-                      Navigator.of(context).pushReplacementNamed('/home');
-
-                    } else {
-                      
-                      // print('ERROUUUUUU!!!!!');
-                    }
+                Container(
+                  width: MediaQuery.sizeOf(context).width - 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    autofocus: true,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(
+                        AppController.instance.isDarkTheme
+                        ? Color.fromARGB(255, 30, 74, 44)
+                        : Color.fromARGB(187, 56, 177, 107)
+                      ),
+                      foregroundColor: WidgetStatePropertyAll(
+                        AppController.instance.isDarkTheme
+                        ? Colors.white
+                        : Colors.black
+                      ),
+                      elevation: const WidgetStatePropertyAll(10)
+                    ),
+                    onPressed: () async{
+                      String result = await AppController.instance.LoginWithEmailPassword(email, password, context);
+                      setState(() {
+                        errorMessage = result; // Atualiza a mensagem de erro
+                      });
+                    }, 
+                    child: Text(
+                      loginButtonText, 
+                      style: const TextStyle(
+                        fontSize: 16, 
+                        fontWeight: FontWeight.bold
+                      )
+                    )
+                  ),
+                ),
+                TextButton(
+                  onPressed: (){
+                    Navigator.of(context).pushNamed('/register');
                   }, 
-                  child: Text(loginButtonText)
+                  child: Text('Registrar-se', style: TextStyle(fontWeight: FontWeight.bold))
                 )
               ],
             ),
@@ -152,3 +180,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+

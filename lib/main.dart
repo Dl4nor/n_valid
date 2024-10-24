@@ -6,15 +6,15 @@ import 'app_widget.dart'; // Importa sua AppWidget
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-
-
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(
     DevicePreview(
-      enabled: true, // Ativa o Device Preview
+      enabled: false, // Ativa o Device Preview
       builder: (context) => ChangeNotifierProvider(
         create: (context) => LanguageProvider(),
         child: const MyApp(), // Chama a classe MyApp
@@ -30,10 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Validad',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const AppWidget(), // Aqui você pode apontar para a sua página inicial
+      home: AppWidget(), // Aqui você pode apontar para a sua página inicial
       // Adicione outras configurações, como rotas, se necessário
     );
   }
