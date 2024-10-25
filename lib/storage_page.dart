@@ -230,7 +230,7 @@ class PageCategory extends StatelessWidget {
                             Container(
                               height: 40,
                               decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
-                              child: const ImageIcon(AssetImage("../assets/images/box.png")),
+                              child: const ImageIcon(AssetImage("assets/images/box.png")),
                             ),
                             Padding(
                               padding: EdgeInsets.all(2), 

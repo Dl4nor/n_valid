@@ -68,15 +68,83 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     Future<void> pickImage() async {
-      final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-      if (image != null){
-        setState(() {
-          profileImage = File(image.path);
-          imageName = image.name;
-        });
+      ImageSource? imageSource;
+
+      await showDialog(
+        context: context, 
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Selecione uma opção", 
+            textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.green, 
+                fontSize: 18, 
+                fontWeight: FontWeight.bold
+              ),
+            ),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: (){
+                          imageSource = ImageSource.camera;
+                          Navigator.pop(context);
+                        }, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 16, 69, 18),
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.green)
+                      ),
+                    ),
+                    const Text("Câmera", style: TextStyle(color: Colors.green))
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: (){
+                          imageSource = ImageSource.gallery;
+                          Navigator.pop(context);
+                        }, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 16, 69, 18)
+                        ),
+                        child: const Icon(Icons.photo, color: Colors.green)
+                      ),
+                    ),
+                    const Text("Galeria", style: TextStyle(color: Colors.green))
+                  ],
+                )
+              ],
+            ),
+          );
+        }
+      );
+      if(imageSource != null){
+        final XFile? image = await ImagePicker().pickImage(source: imageSource!);
+
+        if (image != null){
+          setState(() {
+            profileImage = File(image.path);
+            imageName = image.name;
+          });
+        }
       }
     }
+    
 
     Widget buildAdminField() {
       return Column(
@@ -103,16 +171,17 @@ class _RegisterPageState extends State<RegisterPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(10.0),
               height: 200,
               width: 200,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 194, 194, 194),
                   shadowColor: Colors.green,
-                  padding: EdgeInsets.all(0),
+                  padding: const EdgeInsets.all(1),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100)
+                    borderRadius: BorderRadius.circular(100),
+                    side: const BorderSide(color: Color.fromARGB(255, 0, 255, 47))
                   )
                 ),
                 onPressed: (){
@@ -154,6 +223,7 @@ class _RegisterPageState extends State<RegisterPage> {
               onChanged: (mail) {
                 email = mail; 
               },
+              textInputType: TextInputType.emailAddress,
               error: emailError,
               errorText: "Email precisa ser preenchido",
             ),
@@ -198,12 +268,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       String userID = userCredential.user!.uid;
 
                       if(profileImage != null){
-                        final storageRef = FirebaseStorage.instance.ref().child('profile_images/$userID.jpg');
+                        final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
                         await storageRef.putFile(profileImage!);
 
                         String downloadURL = await storageRef.getDownloadURL();
                       
-                        await FirebaseFirestore.instance.collection('Users').add(
+                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
                           {
                             'name': nomeCompleto,
                             'userName': Uname,
@@ -211,13 +281,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             'mail': email,
                             'isManager': isAdmin,
                             'CNPJ': CNPJ,
-                            'Store': nomeLoja,
-                            'ImageURL': downloadURL
+                            'store': nomeLoja,
+                            'imageURL': downloadURL
                           }
                         );
                       } 
                       else {
-                        await FirebaseFirestore.instance.collection('Users').add(
+                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
                           {
                             'name': nomeCompleto,
                             'userName': Uname,
@@ -225,8 +295,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             'mail': email,
                             'isManager': isAdmin,
                             'CNPJ': CNPJ,
-                            'Store': nomeLoja,
-                            'ImageURL': null,
+                            'store': nomeLoja,
+                            'imageURL': null,
                           }
                         );
                       }

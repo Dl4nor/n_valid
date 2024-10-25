@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -121,22 +122,63 @@ class _OurAppBarState extends State<OurAppBar> {
   }
 }
 
-class OurDrawer extends Drawer {
+class OurDrawer extends StatefulWidget {
   const OurDrawer({super.key});
+
+  @override
+  _OurDrawerState createState() => _OurDrawerState();
+}
+
+class _OurDrawerState extends State<OurDrawer> {
+  String? Uname;
+  String? name;
+  String? email;
+  String? imageURL;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async{
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if(user != null){
+      DocumentSnapshot userData = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user.uid)
+        .get();
+      if(userData.exists){
+        setState(() {
+          Uname = userData['userName'];
+          name = userData['name'];
+          email = userData['mail'];
+          imageURL = userData['imageURL'];
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-        child: Column(
+        child: isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
           children: [
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(color: Color.fromARGB(255, 0, 245, 114)),
               currentAccountPicture: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: Image.asset('../assets/images/ProfilePic.jpg')
-                                     ),
-              accountName: const Text('Dante Espec', style: TextStyle(color: Colors.black)), 
-              accountEmail: const Text('dante_espec@gmail.com', style: TextStyle(color: Colors.black))
+                borderRadius: BorderRadius.circular(50),
+                child: imageURL != null
+                  ? Image.network(imageURL!)
+                  : const Icon(Icons.person)
+              ),
+              accountName: Text('${name!.split(' ').first} ${name!.split(' ')[1][1].toUpperCase()}', style: const TextStyle(color: Colors.black)), 
+              accountEmail: Text(email!, style: const TextStyle(color: Colors.black))
             ),
             ListTile(
               leading: const Icon(Icons.home),
@@ -238,7 +280,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                                    : [],
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
                     labelText: labelText,
                     suffixIcon: isOcult 
                     ? IconButton(
