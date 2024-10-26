@@ -22,8 +22,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String telefone = '';
   String nomeCompleto = '';
   String Uname = '';
-  String CNPJ = '';
-  String nomeLoja = '';
+  String? CNPJ;
+  String? nomeLoja;
   File? profileImage;
   String imageName = '';
   bool isAdmin = false;
@@ -153,12 +153,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   labelText: "CNPJ da loja",
                   maxLength: 14,
                   textInputType: TextInputType.number,
-                  onChanged: (senha) {senha = senha;},
+                  onChanged: (text) {CNPJ = text;},
                 ),
             
                 CustomTextField(
                   labelText: "Nome da Loja",
-                  onChanged: (senha) {senha = senha;},
+                  onChanged: (text) {nomeLoja = text;},
                 ),
               ],
             );
@@ -196,6 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 : CircleAvatar(
                     radius: 100,
                     backgroundImage: FileImage(profileImage!),
+                    backgroundColor: const Color.fromARGB(255, 54, 119, 56),
                   )
               ),
             ),
@@ -257,51 +258,71 @@ class _RegisterPageState extends State<RegisterPage> {
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: ElevatedButton(
                 onPressed: () async{
-                    if(ValidateFields()){
-                      generateUname(nomeCompleto, telefone);
 
-                      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                        email: email, 
-                        password: senha
+                  final BuildContext dailogContext = context;
+
+                  showDialog(
+                    context: dailogContext,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: Colors.transparent,
+                      content: Container(
+                        height: 60,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  );
+
+                  if(ValidateFields()){
+                    generateUname(nomeCompleto, telefone);
+
+                    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      email: email, 
+                      password: senha
+                    );
+
+                    String userID = userCredential.user!.uid;
+
+                    if(profileImage != null){
+                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
+                      await storageRef.putFile(profileImage!);
+
+                      String downloadURL = await storageRef.getDownloadURL();
+                    
+                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                        {
+                          'name': nomeCompleto,
+                          'userName': Uname,
+                          'phone': telefone,
+                          'mail': email,
+                          'isManager': isAdmin,
+                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
+                          'store': FieldValue.arrayUnion([nomeLoja]),
+                          'imageURL': downloadURL
+                        }
                       );
-
-                      String userID = userCredential.user!.uid;
-
-                      if(profileImage != null){
-                        final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
-                        await storageRef.putFile(profileImage!);
-
-                        String downloadURL = await storageRef.getDownloadURL();
-                      
-                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
-                          {
-                            'name': nomeCompleto,
-                            'userName': Uname,
-                            'phone': telefone,
-                            'mail': email,
-                            'isManager': isAdmin,
-                            'CNPJ': CNPJ,
-                            'store': nomeLoja,
-                            'imageURL': downloadURL
-                          }
-                        );
-                      } 
-                      else {
-                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
-                          {
-                            'name': nomeCompleto,
-                            'userName': Uname,
-                            'phone': telefone,
-                            'mail': email,
-                            'isManager': isAdmin,
-                            'CNPJ': CNPJ,
-                            'store': nomeLoja,
-                            'imageURL': null,
-                          }
-                        );
-                      }
-                      Navigator.of(context).pushReplacementNamed('/');
+                    } 
+                    else {
+                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                        {
+                          'name': nomeCompleto,
+                          'userName': Uname,
+                          'phone': telefone,
+                          'mail': email,
+                          'isManager': isAdmin,
+                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
+                          'store': FieldValue.arrayUnion([nomeLoja]),
+                          'imageURL': null,
+                        }
+                      );
                     }
+
+                    Navigator.of(context, rootNavigator: true).pop(); // Fecha o Loading
+                    Navigator.of(context).pushReplacementNamed('/');
+                  } else {
+                    await Future.delayed(Duration(milliseconds: 200));
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
                 }, 
                 child: Text('Registrar')
               ),

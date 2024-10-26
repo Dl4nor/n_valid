@@ -117,7 +117,9 @@ class _OurAppBarState extends State<OurAppBar> {
   Widget build(BuildContext context) {
     return AppBar(
         title: TextWithBorder(text: text, font: 'crash-a-like', size: 60, color: const Color.fromARGB(196, 0, 255, 166)),
-        backgroundColor: Colors.green,
+        backgroundColor: AppController.instance.isDarkTheme
+         ? const Color.fromARGB(255, 57, 202, 93)
+         : const Color.fromARGB(255, 0, 245, 114),
       );
   }
 }
@@ -130,11 +132,44 @@ class OurDrawer extends StatefulWidget {
 }
 
 class _OurDrawerState extends State<OurDrawer> {
+
+  AppController appController = AppController();
+  bool errorCNPJ = false;
+  bool errorStore = false;
   String? Uname;
   String? name;
   String? email;
   String? imageURL;
+  List<dynamic>? stores;
+  List<dynamic>? userCNPJ;
+  bool? isManager;
   bool isLoading = true;
+  String newCNPJ = '';
+  String newStoreName = '';
+  User? user = FirebaseAuth.instance.currentUser;
+  DocumentSnapshot? userData;
+
+  Future<void> loadUserData() async{
+    
+    if(user != null){
+      userData = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user!.uid)
+        .get();
+      if(userData!.exists){
+        setState(() {
+          Uname = userData!['userName'];
+          name = userData!['name'];
+          email = userData!['mail'];
+          stores = userData!['store'];
+          userCNPJ = userData!['CNPJ'];
+          isManager = userData!['isManager'];
+          imageURL = userData!['imageURL'];
+          isLoading = false;  
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -142,42 +177,41 @@ class _OurDrawerState extends State<OurDrawer> {
     loadUserData();
   }
 
-  Future<void> loadUserData() async{
-    User? user = FirebaseAuth.instance.currentUser;
-
-    if(user != null){
-      DocumentSnapshot userData = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(user.uid)
-        .get();
-      if(userData.exists){
-        setState(() {
-          Uname = userData['userName'];
-          name = userData['name'];
-          email = userData['mail'];
-          imageURL = userData['imageURL'];
-          isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
-        child: isLoading 
+        child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Color.fromARGB(255, 0, 245, 114)),
-              currentAccountPicture: ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: imageURL != null
-                  ? Image.network(imageURL!)
-                  : const Icon(Icons.person)
+              decoration: BoxDecoration(
+                color: appController.isDarkTheme 
+                ? const Color.fromARGB(255, 57, 202, 93)
+                : const Color.fromARGB(255, 0, 245, 114)
               ),
-              accountName: Text('${name!.split(' ').first} ${name!.split(' ')[1][1].toUpperCase()}', style: const TextStyle(color: Colors.black)), 
+              currentAccountPicture: imageURL != null 
+                ? Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color.fromARGB(255, 60, 255, 0)
+                  ),
+                  child: CircleAvatar(
+                      backgroundColor: const Color.fromARGB(255, 0, 245, 114),
+                      backgroundImage: NetworkImage(imageURL!)
+                    ),
+                )
+                : Icon(Icons.people),
+              accountName: name!.split(' ').length > 2 
+                ? Text(
+                    '${name!.split(' ').first} ${name!.split(' ')[1][0].toUpperCase()}. ${name!.split(' ').last}', 
+                    style: const TextStyle(color: Colors.black)
+                  ) 
+                : Text(
+                    '${name!.split(' ').first} ${name!.split(' ')[1]}', 
+                    style: const TextStyle(color: Colors.black)
+                  ), 
               accountEmail: Text(email!, style: const TextStyle(color: Colors.black))
             ),
             ListTile(
@@ -186,6 +220,134 @@ class _OurDrawerState extends State<OurDrawer> {
               subtitle: const Text('Menu Inicial'),
               onTap: () {
                 Navigator.of(context).pushReplacementNamed('/home');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.store),
+              title: const Text('Loja'),
+              subtitle: const Text('Lista de Lojas'),
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context){
+                    return SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const ListTile(
+                            title: Text(
+                              'Selecione uma Loja', 
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 57, 202, 93), 
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18
+                              ), 
+                              textAlign: TextAlign.center
+                            ),
+                          ),
+                          for(int i=0;i < stores!.length;i++)
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                              decoration: BoxDecoration(
+                                border: Border.symmetric(horizontal: BorderSide(width: 2)),
+                                borderRadius: BorderRadius.circular(10)
+                              ),
+                              child: ListTile(
+                                title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(10)}', textAlign: TextAlign.center),
+                              ),
+                            ),
+                          if(isManager!)
+                            ListTile(
+                              title: Container(
+                                padding: EdgeInsets.symmetric(vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 22, 83, 39),
+                                  borderRadius: BorderRadius.circular(100)
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_circle, size: 30),
+                                    SizedBox(width: 10),
+                                    Text("Adicionar Loja")
+                                  ]
+                                ),
+                              ),
+                              onTap: () {
+                                showDialog(
+                                  context: context, 
+                                  builder: (BuildContext context){
+                                    return StatefulBuilder(
+                                      builder:(context, setState) {
+                                        return AlertDialog(
+                                          title: const Text(
+                                            "Cadastrar Loja", 
+                                            style: TextStyle(color: Color.fromARGB(255, 57, 202, 93), fontWeight: FontWeight.bold), 
+                                            textAlign: TextAlign.center
+                                          ),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CustomTextField(
+                                                labelText: 'Nome da Loja', 
+                                                onChanged: (text) {
+                                                  newStoreName = text;
+                                                },
+                                                error: errorStore,
+                                                errorText: "Nome Inválido",
+                                              ),
+                                              CustomTextField(
+                                                labelText: 'CNPJ', 
+                                                onChanged: (text) {
+                                                  newCNPJ = text;
+                                                },
+                                                maxLength: 14,
+                                                textInputType: TextInputType.number,
+                                                error: errorCNPJ,
+                                                errorText: "CNPJ Inválido",
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    errorCNPJ = newCNPJ.isEmpty;
+                                                    errorStore = newStoreName.isEmpty;
+                                                  });
+                                                  if(!errorCNPJ && !errorStore){
+                                                    FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                                                      {
+                                                        'CNPJ': FieldValue.arrayUnion([newCNPJ]),
+                                                        'store': FieldValue.arrayUnion([newStoreName])
+                                                      }
+                                                    );
+                                                    Navigator.of(context, rootNavigator: true).pop();
+                                                  }
+                                                }, 
+                                                child: Text("Cadastrar")
+                                              )
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+                );
+                Column(
+                  children: [
+                    ListTile(
+                      title: Text("data"),
+                    ),
+                    ListTile(
+                      title: Text("data"),
+                    )
+                  ],
+                );
               },
             ),
             ListTile(
@@ -264,7 +426,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Card(
-                shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                shape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50)), borderSide: BorderSide(color: Colors.transparent)),
                 child: TextField(
                   onChanged:(value){
                     widget.onChanged(value);

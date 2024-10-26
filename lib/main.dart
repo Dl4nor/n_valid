@@ -1,5 +1,6 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 import 'app_widget.dart'; // Importa sua AppWidget
@@ -12,6 +13,11 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp
+  ]);
+
   runApp(
     DevicePreview(
       enabled: false, // Ativa o Device Preview
