@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
+import 'package:n_valid/app_widget.dart';
 import 'package:provider/provider.dart';
 import 'language_provider.dart'; // Importa o LanguageProvider
 
@@ -70,39 +71,20 @@ class _LoginPageState extends State<LoginPage> {
                     style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)
                   ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Card(
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                    child: TextField(
-                      onChanged: (text) {
-                        email = text;
-                      },
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                        labelText: emailLabel, // Usando texto traduzido
-                      )
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: CustomTextField(
+                      labelText: emailLabel, 
+                      onChanged: (text) {email = text;},
+                      textInputType: TextInputType.emailAddress,
+                    )
                 ),
-                const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Card(
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                    child: TextField(
-                      onChanged: (text) {
-                        password = text;
-                      },
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                        labelText: passwordLabel, // Usando texto traduzido
-                      ),
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: CustomTextField(
+                      labelText: passwordLabel, 
+                      onChanged: (text) {password = text;},
+                      isOcult: true,
+                    )
                 ),
                 const SizedBox(height: 15),
                 Container(

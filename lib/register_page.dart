@@ -22,8 +22,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String telefone = '';
   String nomeCompleto = '';
   String Uname = '';
-  String CNPJ = '';
-  String nomeLoja = '';
+  String? CNPJ;
+  String? nomeLoja;
   File? profileImage;
   String imageName = '';
   bool isAdmin = false;
@@ -68,15 +68,83 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     Future<void> pickImage() async {
-      final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-      if (image != null){
-        setState(() {
-          profileImage = File(image.path);
-          imageName = image.name;
-        });
+      ImageSource? imageSource;
+
+      await showDialog(
+        context: context, 
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Selecione uma opção", 
+            textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.green, 
+                fontSize: 18, 
+                fontWeight: FontWeight.bold
+              ),
+            ),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: (){
+                          imageSource = ImageSource.camera;
+                          Navigator.pop(context);
+                        }, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 16, 69, 18),
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.green)
+                      ),
+                    ),
+                    const Text("Câmera", style: TextStyle(color: Colors.green))
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: (){
+                          imageSource = ImageSource.gallery;
+                          Navigator.pop(context);
+                        }, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 16, 69, 18)
+                        ),
+                        child: const Icon(Icons.photo, color: Colors.green)
+                      ),
+                    ),
+                    const Text("Galeria", style: TextStyle(color: Colors.green))
+                  ],
+                )
+              ],
+            ),
+          );
+        }
+      );
+      if(imageSource != null){
+        final XFile? image = await ImagePicker().pickImage(source: imageSource!);
+
+        if (image != null){
+          setState(() {
+            profileImage = File(image.path);
+            imageName = image.name;
+          });
+        }
       }
     }
+    
 
     Widget buildAdminField() {
       return Column(
@@ -85,12 +153,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   labelText: "CNPJ da loja",
                   maxLength: 14,
                   textInputType: TextInputType.number,
-                  onChanged: (senha) {senha = senha;},
+                  onChanged: (text) {CNPJ = text;},
                 ),
             
                 CustomTextField(
                   labelText: "Nome da Loja",
-                  onChanged: (senha) {senha = senha;},
+                  onChanged: (text) {nomeLoja = text;},
                 ),
               ],
             );
@@ -103,16 +171,17 @@ class _RegisterPageState extends State<RegisterPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(10.0),
               height: 200,
               width: 200,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 194, 194, 194),
                   shadowColor: Colors.green,
-                  padding: EdgeInsets.all(0),
+                  padding: const EdgeInsets.all(1),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100)
+                    borderRadius: BorderRadius.circular(100),
+                    side: const BorderSide(color: Color.fromARGB(255, 0, 255, 47))
                   )
                 ),
                 onPressed: (){
@@ -127,6 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 : CircleAvatar(
                     radius: 100,
                     backgroundImage: FileImage(profileImage!),
+                    backgroundColor: const Color.fromARGB(255, 54, 119, 56),
                   )
               ),
             ),
@@ -154,6 +224,7 @@ class _RegisterPageState extends State<RegisterPage> {
               onChanged: (mail) {
                 email = mail; 
               },
+              textInputType: TextInputType.emailAddress,
               error: emailError,
               errorText: "Email precisa ser preenchido",
             ),
@@ -187,51 +258,71 @@ class _RegisterPageState extends State<RegisterPage> {
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: ElevatedButton(
                 onPressed: () async{
-                    if(ValidateFields()){
-                      generateUname(nomeCompleto, telefone);
 
-                      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                        email: email, 
-                        password: senha
+                  final BuildContext dailogContext = context;
+
+                  showDialog(
+                    context: dailogContext,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: Colors.transparent,
+                      content: Container(
+                        height: 60,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  );
+
+                  if(ValidateFields()){
+                    generateUname(nomeCompleto, telefone);
+
+                    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      email: email, 
+                      password: senha
+                    );
+
+                    String userID = userCredential.user!.uid;
+
+                    if(profileImage != null){
+                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
+                      await storageRef.putFile(profileImage!);
+
+                      String downloadURL = await storageRef.getDownloadURL();
+                    
+                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                        {
+                          'name': nomeCompleto,
+                          'userName': Uname,
+                          'phone': telefone,
+                          'mail': email,
+                          'isManager': isAdmin,
+                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
+                          'store': FieldValue.arrayUnion([nomeLoja]),
+                          'imageURL': downloadURL
+                        }
                       );
-
-                      String userID = userCredential.user!.uid;
-
-                      if(profileImage != null){
-                        final storageRef = FirebaseStorage.instance.ref().child('profile_images/$userID.jpg');
-                        await storageRef.putFile(profileImage!);
-
-                        String downloadURL = await storageRef.getDownloadURL();
-                      
-                        await FirebaseFirestore.instance.collection('Users').add(
-                          {
-                            'name': nomeCompleto,
-                            'userName': Uname,
-                            'phone': telefone,
-                            'mail': email,
-                            'isManager': isAdmin,
-                            'CNPJ': CNPJ,
-                            'Store': nomeLoja,
-                            'ImageURL': downloadURL
-                          }
-                        );
-                      } 
-                      else {
-                        await FirebaseFirestore.instance.collection('Users').add(
-                          {
-                            'name': nomeCompleto,
-                            'userName': Uname,
-                            'phone': telefone,
-                            'mail': email,
-                            'isManager': isAdmin,
-                            'CNPJ': CNPJ,
-                            'Store': nomeLoja,
-                            'ImageURL': null,
-                          }
-                        );
-                      }
-                      Navigator.of(context).pushReplacementNamed('/');
+                    } 
+                    else {
+                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                        {
+                          'name': nomeCompleto,
+                          'userName': Uname,
+                          'phone': telefone,
+                          'mail': email,
+                          'isManager': isAdmin,
+                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
+                          'store': FieldValue.arrayUnion([nomeLoja]),
+                          'imageURL': null,
+                        }
+                      );
                     }
+
+                    Navigator.of(context, rootNavigator: true).pop(); // Fecha o Loading
+                    Navigator.of(context).pushReplacementNamed('/');
+                  } else {
+                    await Future.delayed(Duration(milliseconds: 200));
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
                 }, 
                 child: Text('Registrar')
               ),
