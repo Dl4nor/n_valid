@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:n_valid/app_widget.dart';
-import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -148,20 +146,20 @@ class _RegisterPageState extends State<RegisterPage> {
 
     Widget buildAdminField() {
       return Column(
-              children: [
-                CustomTextField(
-                  labelText: "CNPJ da loja",
-                  maxLength: 14,
-                  textInputType: TextInputType.number,
-                  onChanged: (text) {CNPJ = text;},
-                ),
-            
-                CustomTextField(
-                  labelText: "Nome da Loja",
-                  onChanged: (text) {nomeLoja = text;},
-                ),
-              ],
-            );
+        children: [
+          CustomTextField(
+            labelText: "CNPJ da loja",
+            maxLength: 14,
+            textInputType: TextInputType.number,
+            onChanged: (text) {CNPJ = text;},
+          ),
+      
+          CustomTextField(
+            labelText: "Nome da Loja",
+            onChanged: (text) {nomeLoja = text;},
+          ),
+        ],
+      );
     }
 
     return Scaffold(

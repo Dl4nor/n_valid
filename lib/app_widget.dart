@@ -10,6 +10,8 @@ import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
 
 class AppWidget extends StatelessWidget{
+  static var instance;
+
   const AppWidget({super.key});
 
   @override
@@ -146,28 +148,22 @@ class _OurDrawerState extends State<OurDrawer> {
   bool isLoading = true;
   String newCNPJ = '';
   String newStoreName = '';
-  User? user = FirebaseAuth.instance.currentUser;
+  User? user = AppController.instance.user;
   DocumentSnapshot? userData;
 
   Future<void> loadUserData() async{
-    
-    if(user != null){
-      userData = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(user!.uid)
-        .get();
-      if(userData!.exists){
-        setState(() {
-          Uname = userData!['userName'];
-          name = userData!['name'];
-          email = userData!['mail'];
-          stores = userData!['store'];
-          userCNPJ = userData!['CNPJ'];
-          isManager = userData!['isManager'];
-          imageURL = userData!['imageURL'];
-          isLoading = false;  
-        });
-      }
+    final userData = await AppController.instance.loadUserData();
+    if(userData!.exists){
+      setState(() {
+        Uname = userData['userName'];
+        name = userData['name'];
+        email = userData['mail'];
+        stores = userData['store'];
+        userCNPJ = userData['CNPJ'];
+        isManager = userData['isManager'];
+        imageURL = userData['imageURL'];
+        isLoading = false;  
+      });
     }
   }
 
@@ -209,7 +205,7 @@ class _OurDrawerState extends State<OurDrawer> {
                     style: const TextStyle(color: Colors.black)
                   ) 
                 : Text(
-                    '${name!.split(' ').first} ${name!.split(' ')[1]}', 
+                    '${name!.split(' ').first} ${name!.split(' ').last}', 
                     style: const TextStyle(color: Colors.black)
                   ), 
               accountEmail: Text(email!, style: const TextStyle(color: Colors.black))
@@ -254,6 +250,10 @@ class _OurDrawerState extends State<OurDrawer> {
                               ),
                               child: ListTile(
                                 title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(10)}', textAlign: TextAlign.center),
+                                onTap: () {
+                                  AppController.instance.setStoreName(stores![i]);
+                                  Navigator.of(context).pushReplacementNamed('/storage');
+                                },
                               ),
                             ),
                           if(isManager!)
@@ -307,7 +307,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                                 errorText: "CNPJ Inválido",
                                               ),
                                               ElevatedButton(
-                                                onPressed: () {
+                                                onPressed: () async {
                                                   setState(() {
                                                     errorCNPJ = newCNPJ.isEmpty;
                                                     errorStore = newStoreName.isEmpty;
@@ -319,7 +319,12 @@ class _OurDrawerState extends State<OurDrawer> {
                                                         'store': FieldValue.arrayUnion([newStoreName])
                                                       }
                                                     );
-                                                    Navigator.of(context, rootNavigator: true).pop();
+
+                                                    await loadUserData();
+
+                                                    if(mounted) {
+                                                      Navigator.of(context, rootNavigator: true).pop();
+                                                    }
                                                   }
                                                 }, 
                                                 child: Text("Cadastrar")
@@ -338,24 +343,6 @@ class _OurDrawerState extends State<OurDrawer> {
                     );
                   }
                 );
-                Column(
-                  children: [
-                    ListTile(
-                      title: Text("data"),
-                    ),
-                    ListTile(
-                      title: Text("data"),
-                    )
-                  ],
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.storage),
-              title: const Text('Estoque'),
-              subtitle: const Text('Estoque de Produtos'),
-              onTap: () {
-                Navigator.of(context).pushNamed('/storage');
               },
             ),
             ListTile(
@@ -482,3 +469,4 @@ class ErrorText extends StatelessWidget {
     return Text(text, style: const TextStyle(color: Colors.red));
   }
 }
+

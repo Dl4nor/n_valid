@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/app_widget.dart';
@@ -23,11 +25,6 @@ class _StoragePageState extends State<StoragePage> {
     Colors.green
   ];
 
-  String today = "${DateTime.now().day} / ${DateTime.now().month} / ${DateTime.now().year}";
-  DateTime todayDate = DateTime.now();
-  String expiration = "DD / MM / AAAA";
-  int dias = 0;
-  late DateTime? expirationDate;
   late PageController _pageController;
 
   @override
@@ -98,100 +95,8 @@ class _StoragePageState extends State<StoragePage> {
           ),
         ]
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return StatefulBuilder(builder: (context, setStateDialog){
-              return AlertDialog(
-                title: const Text("Cadastro de Produtos"),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10.0),
-                        height: 150,
-                        width: 150,
-                        child: ElevatedButton(
-                          style: const ButtonStyle(
-                            backgroundColor: WidgetStatePropertyAll(Color.fromARGB(255, 201, 201, 201)),
-                          ),
-                          onPressed: (){
-                            
-                          }, 
-                          child: const Icon(
-                            Icons.add_photo_alternate, 
-                            size: 60, 
-                            color: Color.fromARGB(255, 102, 102, 102),)
-                        ),
-                      ),
-                      const TextField(
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                          labelText: "Nome do produto"
-                        )
-                      ),
-                      Container(height: 10),
-                      Row(
-                        children: [
-                          Text("Entrada:   ", style: TextStyle(fontSize: 16)),
-                          Container(width: 10),
-                          ElevatedButton(
-                            onPressed: (){
-                              showDatePicker(
-                                context: context, 
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime.now(), 
-                                lastDate: DateTime.now(),
-                              );
-                            }, 
-                            child: Text(today)
-                          )
-                        ],
-                      ),
-                      Container(height: 10),
-                      Row(
-                        children: [
-                          Text("Validade: ", style: TextStyle(fontSize: 16)),
-                          Container(width: 10),
-                          ElevatedButton(onPressed: (){
-                            showDatePicker(
-                              context: context, 
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(), 
-                              lastDate: DateTime(2200)
-                            ).then((selectedDate) {
-                                if(selectedDate != null){
-                                  setStateDialog(() {
-                                    expiration =
-                                      "${selectedDate.day.toString().padLeft(2, '0')} / "
-                                      "${selectedDate.month.toString().padLeft(2, '0')} / "
-                                      "${selectedDate.year}"; 
-                                    expirationDate = selectedDate;
-                                    // Essa parte conta os dias até um produto vencer 🏆:
-                                    dias = expirationDate!.difference(todayDate).inDays+1;
-                                    print("$dias");
-                                  });
-                                }
-                            });
-                          }, child: Text(expiration))
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }
-              );
-              }
-          );
-        }, 
-        child: const Icon(Icons.add_shopping_cart)
-      ),
     );
   }
-  
 }
 
 class PageCategory extends StatelessWidget {
@@ -211,44 +116,258 @@ class PageCategory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    String today = "${DateTime.now().day} / ${DateTime.now().month} / ${DateTime.now().year}";
+    DateTime todayDate = DateTime.now();
+    String expiration = "DD / MM / AAAA";
+    int dias = 0;
+    late DateTime? expirationDate;
+
+    Future<DocumentSnapshot?> userData = AppController.instance.loadUserData();
+    User? user = AppController.instance.user;
+    
+
     return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height,
-                    color: pressedColors[isPressed].withOpacity(0.3),
-                    child: Padding(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.sizeOf(context).height
+            ),
+            child: Container(
+              width: MediaQuery.sizeOf(context).width,
+              color: pressedColors[isPressed].withOpacity(0.3),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Table(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          for (int i=0;i<10;i++)
-                          TableRow(
-                            decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(width: 0.3))),
-                            children: [
-                            Container(
-                              height: 40,
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
-                              child: const ImageIcon(AssetImage("assets/images/box.png")),
+                          ElevatedButton(
+                            style: const ButtonStyle(
+                              backgroundColor: WidgetStatePropertyAll(Colors.transparent),
+                              shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                              padding: WidgetStatePropertyAll(EdgeInsets.zero)
                             ),
-                            Padding(
-                              padding: EdgeInsets.all(2), 
-                              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
+                            child: Icon(Icons.my_library_add, size: 40, color: Colors.white),
+                            onPressed: (){
+                              showModalBottomSheet(
+                                context: context, 
+                                builder: (BuildContext context){
+                                  return SingleChildScrollView(
+                                    child: Column(
+                                      children: [
+                                        const ListTile(
+                                          title: Text(
+                                            'Selecione uma opção', 
+                                            style: TextStyle(
+                                              color: Color.fromARGB(255, 57, 202, 93), 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18
+                                            ), 
+                                            textAlign: TextAlign.center
+                                          ),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            border: Border.symmetric(horizontal: BorderSide(width: 2)),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                          child: ListTile(
+                                              title: const Row(
+                                                children: [
+                                                  Icon(Icons.person_add_alt_rounded),
+                                                  SizedBox(width: 20),
+                                                  Text(
+                                                    'Cadastrar funcionário', 
+                                                    textAlign: TextAlign.center
+                                                  )
+                                                ],
+                                              ),
+                                            onTap: () {
+
+                                            },
+                                          ),
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            border: Border.symmetric(horizontal: BorderSide(width: 2)),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                          child: ListTile(
+                                              title: const Row(
+                                                children: [
+                                                  Icon(Icons.add_shopping_cart),
+                                                  SizedBox(width: 20),
+                                                  Text(
+                                                    'Cadastrar produto', 
+                                                    textAlign: TextAlign.center
+                                                  )
+                                                ],
+                                              ),
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return StatefulBuilder(builder: (context, setStateDialog){
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                      "Cadastro de Produtos", 
+                                                      style: TextStyle(
+                                                        color: Colors.green,
+                                                        fontWeight: FontWeight.bold
+                                                      ), 
+                                                      textAlign: TextAlign.center
+                                                    ),
+                                                    content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Container(
+                                                            padding: EdgeInsets.all(10.0),
+                                                            height: 150,
+                                                            width: 150,
+                                                            child: ElevatedButton(
+                                                              style: const ButtonStyle(
+                                                                backgroundColor: WidgetStatePropertyAll(Color.fromARGB(255, 201, 201, 201)),
+                                                              ),
+                                                              onPressed: (){
+                                                                
+                                                              }, 
+                                                              child: const Icon(
+                                                                Icons.add_photo_alternate, 
+                                                                size: 60, 
+                                                                color: Color.fromARGB(255, 102, 102, 102),)
+                                                            ),
+                                                          ),
+                                                          const TextField(
+                                                            decoration: InputDecoration(
+                                                              contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                                                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                                                              labelText: "Nome do produto"
+                                                            )
+                                                          ),
+                                                          Container(height: 10),
+                                                          Row(
+                                                            children: [
+                                                              Text("Entrada:   ", style: TextStyle(fontSize: 16)),
+                                                              Container(width: 10),
+                                                              ElevatedButton(
+                                                                onPressed: (){
+                                                                  showDatePicker(
+                                                                    context: context, 
+                                                                    initialDate: DateTime.now(),
+                                                                    firstDate: DateTime.now(), 
+                                                                    lastDate: DateTime.now(),
+                                                                  );
+                                                                }, 
+                                                                child: Text(today)
+                                                              )
+                                                            ],
+                                                          ),
+                                                          Container(height: 10),
+                                                          Row(
+                                                            children: [
+                                                              Text("Validade: ", style: TextStyle(fontSize: 16)),
+                                                              Container(width: 10),
+                                                              ElevatedButton(onPressed: (){
+                                                                showDatePicker(
+                                                                  context: context, 
+                                                                  initialDate: DateTime.now(),
+                                                                  firstDate: DateTime.now(), 
+                                                                  lastDate: DateTime(2200)
+                                                                ).then((selectedDate) {
+                                                                    if(selectedDate != null){
+                                                                      setStateDialog(() {
+                                                                        expiration =
+                                                                          "${selectedDate.day.toString().padLeft(2, '0')} / "
+                                                                          "${selectedDate.month.toString().padLeft(2, '0')} / "
+                                                                          "${selectedDate.year}"; 
+                                                                        expirationDate = selectedDate;
+                                                                        // Essa parte conta os dias até um produto vencer 🏆:
+                                                                        dias = expirationDate!.difference(todayDate).inDays+1;
+                                                                        print("$dias");
+                                                                      });
+                                                                    }
+                                                                });
+                                                              }, child: Text(expiration))
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  });
+                                                }
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              );
+                            },
+                          ),
+                          Expanded(
+                            child: Card(
+                              shape: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(100), 
+                                borderSide: BorderSide(
+                                  color: pressedColors[isPressed].withOpacity(0.8)
+                                )
+                              ), 
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(100)),
+                                  labelText: "Pesquisar produto",
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8)
+                                ),
+                                onChanged: (text){
+                                  
+                                },
+                              ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.all(2), 
-                              child: Text('$days Dias', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
-                            )
-                            ]
-                          )
-                        ],
+                          ),
+                        ]
                       ),
                     ),
-                  )
-                ],
+                    Table(
+                      children: [
+                        for (int i=0;i<10;i++)
+                        TableRow(
+                          decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(width: 0.3))),
+                          children: [
+                          Container(
+                            height: 40,
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
+                            child: const ImageIcon(AssetImage("assets/images/box.png")),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(2), 
+                            child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(2), 
+                            child: Text('$days Dias', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
+                          )
+                          ]
+                        )
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            );
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
 

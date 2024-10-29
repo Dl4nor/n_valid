@@ -44,4 +44,22 @@ class AppController extends ChangeNotifier{
     FirebaseAuth.instance.signOut();
     Navigator.of(context).pushReplacementNamed('/');
   }
+
+  String? controllerStoreName;
+  setStoreName(storeName){
+    controllerStoreName = storeName;
+  }
+
+  
+  User? user = FirebaseAuth.instance.currentUser;
+  Future<DocumentSnapshot?> loadUserData() async{
+    if(user != null){
+      final userData = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user!.uid)
+        .get();
+      return userData;
+    }
+    return null;
+  }
 }
