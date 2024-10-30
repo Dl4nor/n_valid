@@ -41,7 +41,7 @@ class AppController extends ChangeNotifier{
   }
 
   Future<void> Logout(BuildContext context) async {
-    FirebaseAuth.instance.signOut();
+    await FirebaseAuth.instance.signOut();
     Navigator.of(context).pushReplacementNamed('/');
   }
 
@@ -50,9 +50,8 @@ class AppController extends ChangeNotifier{
     controllerStoreName = storeName;
   }
 
-  
-  User? user = FirebaseAuth.instance.currentUser;
   Future<DocumentSnapshot?> loadUserData() async{
+    User? user = FirebaseAuth.instance.currentUser;
     if(user != null){
       final userData = await FirebaseFirestore.instance
         .collection('Users')

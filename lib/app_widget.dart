@@ -135,7 +135,6 @@ class OurDrawer extends StatefulWidget {
 
 class _OurDrawerState extends State<OurDrawer> {
 
-  AppController appController = AppController();
   bool errorCNPJ = false;
   bool errorStore = false;
   String? Uname;
@@ -148,7 +147,7 @@ class _OurDrawerState extends State<OurDrawer> {
   bool isLoading = true;
   String newCNPJ = '';
   String newStoreName = '';
-  User? user = AppController.instance.user;
+  User? user = FirebaseAuth.instance.currentUser;
   DocumentSnapshot? userData;
 
   Future<void> loadUserData() async{
@@ -167,6 +166,17 @@ class _OurDrawerState extends State<OurDrawer> {
     }
   }
 
+  Future<void> logout() async{
+    Uname = null;
+    name = null; 
+    email = null; 
+    stores = null; 
+    userCNPJ = null;
+    isManager = null; 
+    imageURL =  null;
+    isLoading = false;  
+  }
+
   @override
   void initState() {
     super.initState();
@@ -182,7 +192,7 @@ class _OurDrawerState extends State<OurDrawer> {
           children: [
             UserAccountsDrawerHeader(
               decoration: BoxDecoration(
-                color: appController.isDarkTheme 
+                color: AppController.instance.isDarkTheme 
                 ? const Color.fromARGB(255, 57, 202, 93)
                 : const Color.fromARGB(255, 0, 245, 114)
               ),
@@ -309,14 +319,26 @@ class _OurDrawerState extends State<OurDrawer> {
                                               ElevatedButton(
                                                 onPressed: () async {
                                                   setState(() {
-                                                    errorCNPJ = newCNPJ.isEmpty;
-                                                    errorStore = newStoreName.isEmpty;
+                                                    errorCNPJ = newCNPJ.isEmpty || (userCNPJ != null && userCNPJ!.contains(newCNPJ));
+                                                    errorStore = newStoreName.isEmpty || (stores != null && stores!.contains(newStoreName));
                                                   });
                                                   if(!errorCNPJ && !errorStore){
-                                                    FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                                                    FirebaseFirestore.instance.collection('Users')
+                                                    .doc(user!.uid)
+                                                    .update(
                                                       {
                                                         'CNPJ': FieldValue.arrayUnion([newCNPJ]),
                                                         'store': FieldValue.arrayUnion([newStoreName])
+                                                      }
+                                                    );
+                                                    FirebaseFirestore.instance.collection('Stores')
+                                                    .doc('$newStoreName${newCNPJ.substring(10)}')
+                                                    .set(
+                                                      {
+                                                        'CNPJ': newCNPJ,
+                                                        'store': newStoreName,
+                                                        'employers': [],
+                                                        'storageCode': []
                                                       }
                                                     );
 
@@ -358,6 +380,7 @@ class _OurDrawerState extends State<OurDrawer> {
               title: const Text('Logout'),
               subtitle: const Text('Sair'),
               onTap: () {
+                logout();
                 AppController.instance.Logout(context);
               },
             )

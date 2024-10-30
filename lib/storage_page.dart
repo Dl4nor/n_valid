@@ -124,7 +124,7 @@ class PageCategory extends StatelessWidget {
     late DateTime? expirationDate;
 
     Future<DocumentSnapshot?> userData = AppController.instance.loadUserData();
-    User? user = AppController.instance.user;
+    User? user = FirebaseAuth.instance.currentUser;
     
 
     return SingleChildScrollView(
