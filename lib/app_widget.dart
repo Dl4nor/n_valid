@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
@@ -149,6 +152,8 @@ class _OurDrawerState extends State<OurDrawer> {
   String newStoreName = '';
   User? user = FirebaseAuth.instance.currentUser;
   DocumentSnapshot? userData;
+  File? profileImage;
+  String imageName = '';
 
   Future<void> loadUserData() async{
     final userData = await AppController.instance.loadUserData();
@@ -176,6 +181,16 @@ class _OurDrawerState extends State<OurDrawer> {
     imageURL =  null;
     isLoading = false;  
   }
+  
+  Future<void> pickImage() async {
+    final File? image = await AppController.instance.pickImage(context);
+    if (image != null) {
+      setState(() {
+        profileImage = image;
+        imageName = image.path.split('/').last;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -197,18 +212,60 @@ class _OurDrawerState extends State<OurDrawer> {
                 : const Color.fromARGB(255, 0, 245, 114)
               ),
               currentAccountPicture: imageURL != null 
-                ? Container(
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color.fromARGB(255, 60, 255, 0)
+                ? ElevatedButton(
+                  onPressed: () async{
+                    await pickImage();
+
+                    if(profileImage != null){
+                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/${user!.uid}.jpg');
+                      await storageRef.putFile(profileImage!);
+                      String downloadURL = await storageRef.getDownloadURL();
+                    
+                      await FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                        {
+                          'imageURL': downloadURL
+                        }
+                      );
+                      loadUserData();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(0),
+                    backgroundBuilder: (context, states, child) {
+                      return Container(
+                        padding: EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color.fromARGB(255, 60, 255, 0)
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: const Color.fromARGB(255, 0, 245, 114),
+                          backgroundImage: NetworkImage(imageURL!)
+                        ),
+                      );
+                    },
                   ),
-                  child: CircleAvatar(
-                      backgroundColor: const Color.fromARGB(255, 0, 245, 114),
-                      backgroundImage: NetworkImage(imageURL!)
-                    ),
+                  child: const Text('')
                 )
-                : Icon(Icons.people),
+                : ElevatedButton(
+                    onPressed: (){
+                      AppController.instance.pickImage(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(0),
+                      backgroundBuilder: (context, states, child) {
+                        return Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color.fromARGB(255, 60, 255, 0)
+                          ),
+                          child: const Icon(Icons.people)
+                        );
+                      },
+                    ),
+                    child: const Text('')
+                  ),
               accountName: name!.split(' ').length > 2 
                 ? Text(
                     '${name!.split(' ').first} ${name!.split(' ')[1][0].toUpperCase()}. ${name!.split(' ').last}', 
@@ -261,7 +318,7 @@ class _OurDrawerState extends State<OurDrawer> {
                               child: ListTile(
                                 title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(10)}', textAlign: TextAlign.center),
                                 onTap: () {
-                                  AppController.instance.setStoreName(stores![i]);
+                                  AppController.instance.setStore(stores![i], userCNPJ![i]);
                                   Navigator.of(context).pushReplacementNamed('/storage');
                                 },
                               ),
@@ -319,7 +376,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                               ElevatedButton(
                                                 onPressed: () async {
                                                   setState(() {
-                                                    errorCNPJ = newCNPJ.isEmpty || (userCNPJ != null && userCNPJ!.contains(newCNPJ));
+                                                    errorCNPJ = newCNPJ.length < 14 || (userCNPJ != null && userCNPJ!.contains(newCNPJ));
                                                     errorStore = newStoreName.isEmpty || (stores != null && stores!.contains(newStoreName));
                                                   });
                                                   if(!errorCNPJ && !errorStore){
@@ -338,7 +395,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                                         'CNPJ': newCNPJ,
                                                         'store': newStoreName,
                                                         'employers': [],
-                                                        'storageCode': []
+                                                        'storageCode': ''
                                                       }
                                                     );
 

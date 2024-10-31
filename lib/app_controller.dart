@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class AppController extends ChangeNotifier{
   static AppController instance = AppController();
@@ -46,8 +48,10 @@ class AppController extends ChangeNotifier{
   }
 
   String? controllerStoreName;
-  setStoreName(storeName){
+  String? controllerCNPJ;
+  setStore(storeName, CNPJ){
     controllerStoreName = storeName;
+    controllerCNPJ = CNPJ;
   }
 
   Future<DocumentSnapshot?> loadUserData() async{
@@ -55,9 +59,83 @@ class AppController extends ChangeNotifier{
     if(user != null){
       final userData = await FirebaseFirestore.instance
         .collection('Users')
-        .doc(user!.uid)
+        .doc(user.uid)
         .get();
       return userData;
+    }
+    return null;
+  }
+
+  Future<File?> pickImage(BuildContext context) async {
+    ImageSource? imageSource;
+
+    // Mostra o diálogo para escolher a fonte da imagem
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Selecione uma opção",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.green, 
+              fontSize: 18, 
+              fontWeight: FontWeight.bold
+            ),
+          ),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        imageSource = ImageSource.camera;
+                        Navigator.pop(context);
+                      },
+                      child: const Icon(Icons.camera_alt, color: Colors.green),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 16, 69, 18),
+                      ),
+                    ),
+                  ),
+                  const Text("Câmera", style: TextStyle(color: Colors.green)),
+                ],
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        imageSource = ImageSource.gallery;
+                        Navigator.pop(context);
+                      },
+                      child: const Icon(Icons.photo, color: Colors.green),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 16, 69, 18),
+                      ),
+                    ),
+                  ),
+                  const Text("Galeria", style: TextStyle(color: Colors.green)),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Retorna o arquivo de imagem escolhido
+    if (imageSource != null) {
+      final XFile? image = await ImagePicker().pickImage(source: imageSource!);
+      return image != null ? File(image.path) : null;
     }
     return null;
   }

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/app_widget.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -66,83 +66,14 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     Future<void> pickImage() async {
-
-      ImageSource? imageSource;
-
-      await showDialog(
-        context: context, 
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Selecione uma opção", 
-            textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.green, 
-                fontSize: 18, 
-                fontWeight: FontWeight.bold
-              ),
-            ),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 100,
-                      width: 100,
-                      child: ElevatedButton(
-                        onPressed: (){
-                          imageSource = ImageSource.camera;
-                          Navigator.pop(context);
-                        }, 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 16, 69, 18),
-                        ),
-                        child: const Icon(Icons.camera_alt, color: Colors.green)
-                      ),
-                    ),
-                    const Text("Câmera", style: TextStyle(color: Colors.green))
-                  ],
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 100,
-                      width: 100,
-                      child: ElevatedButton(
-                        onPressed: (){
-                          imageSource = ImageSource.gallery;
-                          Navigator.pop(context);
-                        }, 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 16, 69, 18)
-                        ),
-                        child: const Icon(Icons.photo, color: Colors.green)
-                      ),
-                    ),
-                    const Text("Galeria", style: TextStyle(color: Colors.green))
-                  ],
-                )
-              ],
-            ),
-          );
-        }
-      );
-      if(imageSource != null){
-        final XFile? image = await ImagePicker().pickImage(source: imageSource!);
-
-        if (image != null){
-          setState(() {
-            profileImage = File(image.path);
-            imageName = image.name;
-          });
-        }
+      final File? image = await AppController.instance.pickImage(context);
+      if (image != null) {
+        setState(() {
+          profileImage = image;
+          imageName = image.path.split('/').last;
+        });
       }
     }
-    
 
     Widget buildAdminField() {
       return Column(
@@ -311,6 +242,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           'CNPJ': FieldValue.arrayUnion([CNPJ]),
                           'store': FieldValue.arrayUnion([nomeLoja]),
                           'imageURL': null,
+                        }
+                      );
+                    }
+                    if(isAdmin && CNPJ!.isNotEmpty && nomeLoja!.isNotEmpty){
+                      await FirebaseFirestore.instance.collection('Stores').doc('$nomeLoja${CNPJ!.substring(10)}').set(
+                        {
+                          'CNPJ': CNPJ,
+                          'store': nomeLoja,
+                          'storageID': '',
+                          'employers': []
                         }
                       );
                     }

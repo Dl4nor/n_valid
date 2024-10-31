@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/app_widget.dart';
 
@@ -123,9 +124,12 @@ class PageCategory extends StatelessWidget {
     int dias = 0;
     late DateTime? expirationDate;
 
+    String nomeFuncionario = '';
+    String telFuncionario = '';
+    String errorText = '';
+
     Future<DocumentSnapshot?> userData = AppController.instance.loadUserData();
     User? user = FirebaseAuth.instance.currentUser;
-    
 
     return SingleChildScrollView(
       child: Column(
@@ -190,7 +194,115 @@ class PageCategory extends StatelessWidget {
                                                 ],
                                               ),
                                             onTap: () {
+                                              showDialog(
+                                                context: context, 
+                                                builder:  (BuildContext context) {
+                                                  return StatefulBuilder(builder: (context, setStateDialog){
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                        "Cadastrar Funcionário",
+                                                        style: TextStyle(
+                                                          color: Colors.green,
+                                                          fontWeight: FontWeight.bold
+                                                        ), 
+                                                        textAlign: TextAlign.center
+                                                      ),
+                                                      content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          if(errorText.isNotEmpty)
+                                                            Container(
+                                                              margin: EdgeInsets.only(bottom: 16),
+                                                              child: Text(
+                                                                errorText, 
+                                                                style: const TextStyle(
+                                                                  color: Colors.red,
+                                                                  fontWeight: FontWeight.bold
+                                                                )
+                                                              )
+                                                            ),
+                                                          TextField(
+                                                            onChanged: (text){
+                                                              nomeFuncionario = text;
+                                                            },
+                                                            decoration: const InputDecoration(
+                                                              contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                                                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                                                              labelText: "Nome completo do Funcionário"
+                                                            )
+                                                          ),
+                                                          Container(height: 10),
+                                                          TextField(
+                                                            onChanged: (text){
+                                                              telFuncionario = text;
+                                                            },
+                                                            decoration: const InputDecoration(
+                                                              contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                                                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
+                                                              labelText: "Telefone do Funcionário"
+                                                            ),
+                                                            keyboardType: TextInputType.phone,
+                                                            inputFormatters: [
+                                                              LengthLimitingTextInputFormatter(11),
+                                                              FilteringTextInputFormatter.digitsOnly
+                                                            ],
+                                                          ),
+                                                          SizedBox(height: 10),
+                                                          ElevatedButton(
+                                                            onPressed: () async{
+                                                              if(nomeFuncionario.isNotEmpty && telFuncionario.isNotEmpty){
+                                                                String firstLetter = nomeFuncionario.split(' ').first[0];
+                                                                String lastName = nomeFuncionario.split(' ').last;
+                                                                String last4Digits = telFuncionario.substring(7);
+                                                                String unameFuncionario = '$firstLetter$lastName$last4Digits';
+                                                                QuerySnapshot userNameSnapshot = await FirebaseFirestore.instance
+                                                                  .collection('Users')
+                                                                  .where('userName', isEqualTo: unameFuncionario)
+                                                                  .get();
 
+                                                                if(userNameSnapshot.docs.isNotEmpty){
+                                                                  FirebaseFirestore.instance
+                                                                    .collection('Users')
+                                                                    .doc(userNameSnapshot.docs[0].id)
+                                                                    .update(
+                                                                      {
+                                                                        'CNPJ': [AppController.instance.controllerCNPJ],
+                                                                        'store': [AppController.instance.controllerStoreName]
+                                                                      }
+                                                                  );
+                                                                  await AppController.instance.loadUserData();
+                                                                  Navigator.of(context, rootNavigator: true).pop();
+                                                                }
+                                                                else if(nomeFuncionario.split(' ').length < 2){
+                                                                  setStateDialog((){
+                                                                    errorText = "Nome não está completo";
+                                                                  });
+                                                                }
+                                                                else if(telFuncionario.length < 11) {
+                                                                  setStateDialog((){
+                                                                    errorText = "Número de Telefone inválido";
+                                                                  });
+                                                                }
+                                                                else{
+                                                                  setStateDialog((){
+                                                                    errorText = "Usuário não encontrado";
+                                                                  });
+                                                                }
+                                                              }
+                                                              else {
+                                                                setStateDialog((){
+                                                                  errorText = "Nada a consultar";
+                                                                });
+                                                              }
+                                                            }, 
+                                                            child: const Text('Cadastrar Funcionário')
+                                                          )
+                                                        ],
+                                                      ),
+                                                    );
+                                                  });
+                                                },
+                                              );
                                             },
                                           ),
                                         ),
@@ -237,7 +349,7 @@ class PageCategory extends StatelessWidget {
                                                                 backgroundColor: WidgetStatePropertyAll(Color.fromARGB(255, 201, 201, 201)),
                                                               ),
                                                               onPressed: (){
-                                                                
+                                                                AppController.instance.pickImage(context);
                                                               }, 
                                                               child: const Icon(
                                                                 Icons.add_photo_alternate, 
