@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
@@ -10,6 +13,8 @@ import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
 
 class AppWidget extends StatelessWidget{
+  static var instance;
+
   const AppWidget({super.key});
 
   @override
@@ -133,7 +138,6 @@ class OurDrawer extends StatefulWidget {
 
 class _OurDrawerState extends State<OurDrawer> {
 
-  AppController appController = AppController();
   bool errorCNPJ = false;
   bool errorStore = false;
   String? Uname;
@@ -148,26 +152,43 @@ class _OurDrawerState extends State<OurDrawer> {
   String newStoreName = '';
   User? user = FirebaseAuth.instance.currentUser;
   DocumentSnapshot? userData;
+  File? profileImage;
+  String imageName = '';
 
   Future<void> loadUserData() async{
-    
-    if(user != null){
-      userData = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(user!.uid)
-        .get();
-      if(userData!.exists){
-        setState(() {
-          Uname = userData!['userName'];
-          name = userData!['name'];
-          email = userData!['mail'];
-          stores = userData!['store'];
-          userCNPJ = userData!['CNPJ'];
-          isManager = userData!['isManager'];
-          imageURL = userData!['imageURL'];
-          isLoading = false;  
-        });
-      }
+    final userData = await AppController.instance.loadUserData();
+    if(userData!.exists){
+      setState(() {
+        Uname = userData['userName'];
+        name = userData['name'];
+        email = userData['mail'];
+        stores = userData['store'];
+        userCNPJ = userData['CNPJ'];
+        isManager = userData['isManager'];
+        imageURL = userData['imageURL'];
+        isLoading = false;  
+      });
+    }
+  }
+
+  Future<void> logout() async{
+    Uname = null;
+    name = null; 
+    email = null; 
+    stores = null; 
+    userCNPJ = null;
+    isManager = null; 
+    imageURL =  null;
+    isLoading = false;  
+  }
+  
+  Future<void> pickImage() async {
+    final File? image = await AppController.instance.pickImage(context);
+    if (image != null) {
+      setState(() {
+        profileImage = image;
+        imageName = image.path.split('/').last;
+      });
     }
   }
 
@@ -186,30 +207,72 @@ class _OurDrawerState extends State<OurDrawer> {
           children: [
             UserAccountsDrawerHeader(
               decoration: BoxDecoration(
-                color: appController.isDarkTheme 
+                color: AppController.instance.isDarkTheme 
                 ? const Color.fromARGB(255, 57, 202, 93)
                 : const Color.fromARGB(255, 0, 245, 114)
               ),
               currentAccountPicture: imageURL != null 
-                ? Container(
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color.fromARGB(255, 60, 255, 0)
+                ? ElevatedButton(
+                  onPressed: () async{
+                    await pickImage();
+
+                    if(profileImage != null){
+                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/${user!.uid}.jpg');
+                      await storageRef.putFile(profileImage!);
+                      String downloadURL = await storageRef.getDownloadURL();
+                    
+                      await FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                        {
+                          'imageURL': downloadURL
+                        }
+                      );
+                      loadUserData();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(0),
+                    backgroundBuilder: (context, states, child) {
+                      return Container(
+                        padding: EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color.fromARGB(255, 60, 255, 0)
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: const Color.fromARGB(255, 0, 245, 114),
+                          backgroundImage: NetworkImage(imageURL!)
+                        ),
+                      );
+                    },
                   ),
-                  child: CircleAvatar(
-                      backgroundColor: const Color.fromARGB(255, 0, 245, 114),
-                      backgroundImage: NetworkImage(imageURL!)
-                    ),
+                  child: const Text('')
                 )
-                : Icon(Icons.people),
+                : ElevatedButton(
+                    onPressed: (){
+                      AppController.instance.pickImage(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(0),
+                      backgroundBuilder: (context, states, child) {
+                        return Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color.fromARGB(255, 60, 255, 0)
+                          ),
+                          child: const Icon(Icons.people)
+                        );
+                      },
+                    ),
+                    child: const Text('')
+                  ),
               accountName: name!.split(' ').length > 2 
                 ? Text(
                     '${name!.split(' ').first} ${name!.split(' ')[1][0].toUpperCase()}. ${name!.split(' ').last}', 
                     style: const TextStyle(color: Colors.black)
                   ) 
                 : Text(
-                    '${name!.split(' ').first} ${name!.split(' ')[1]}', 
+                    '${name!.split(' ').first} ${name!.split(' ').last}', 
                     style: const TextStyle(color: Colors.black)
                   ), 
               accountEmail: Text(email!, style: const TextStyle(color: Colors.black))
@@ -254,6 +317,10 @@ class _OurDrawerState extends State<OurDrawer> {
                               ),
                               child: ListTile(
                                 title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(10)}', textAlign: TextAlign.center),
+                                onTap: () {
+                                  AppController.instance.setStore(stores![i], userCNPJ![i]);
+                                  Navigator.of(context).pushReplacementNamed('/storage');
+                                },
                               ),
                             ),
                           if(isManager!)
@@ -307,19 +374,36 @@ class _OurDrawerState extends State<OurDrawer> {
                                                 errorText: "CNPJ Inválido",
                                               ),
                                               ElevatedButton(
-                                                onPressed: () {
+                                                onPressed: () async {
                                                   setState(() {
-                                                    errorCNPJ = newCNPJ.isEmpty;
-                                                    errorStore = newStoreName.isEmpty;
+                                                    errorCNPJ = newCNPJ.length < 14 || (userCNPJ != null && userCNPJ!.contains(newCNPJ));
+                                                    errorStore = newStoreName.isEmpty || (stores != null && stores!.contains(newStoreName));
                                                   });
                                                   if(!errorCNPJ && !errorStore){
-                                                    FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                                                    FirebaseFirestore.instance.collection('Users')
+                                                    .doc(user!.uid)
+                                                    .update(
                                                       {
                                                         'CNPJ': FieldValue.arrayUnion([newCNPJ]),
                                                         'store': FieldValue.arrayUnion([newStoreName])
                                                       }
                                                     );
-                                                    Navigator.of(context, rootNavigator: true).pop();
+                                                    FirebaseFirestore.instance.collection('Stores')
+                                                    .doc('$newStoreName${newCNPJ.substring(10)}')
+                                                    .set(
+                                                      {
+                                                        'CNPJ': newCNPJ,
+                                                        'store': newStoreName,
+                                                        'employers': [],
+                                                        'storageCode': ''
+                                                      }
+                                                    );
+
+                                                    await loadUserData();
+
+                                                    if(mounted) {
+                                                      Navigator.of(context, rootNavigator: true).pop();
+                                                    }
                                                   }
                                                 }, 
                                                 child: Text("Cadastrar")
@@ -338,24 +422,6 @@ class _OurDrawerState extends State<OurDrawer> {
                     );
                   }
                 );
-                Column(
-                  children: [
-                    ListTile(
-                      title: Text("data"),
-                    ),
-                    ListTile(
-                      title: Text("data"),
-                    )
-                  ],
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.storage),
-              title: const Text('Estoque'),
-              subtitle: const Text('Estoque de Produtos'),
-              onTap: () {
-                Navigator.of(context).pushNamed('/storage');
               },
             ),
             ListTile(
@@ -371,6 +437,7 @@ class _OurDrawerState extends State<OurDrawer> {
               title: const Text('Logout'),
               subtitle: const Text('Sair'),
               onTap: () {
+                logout();
                 AppController.instance.Logout(context);
               },
             )
@@ -482,3 +549,4 @@ class ErrorText extends StatelessWidget {
     return Text(text, style: const TextStyle(color: Colors.red));
   }
 }
+
