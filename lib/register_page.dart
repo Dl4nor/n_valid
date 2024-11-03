@@ -213,7 +213,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     String userID = userCredential.user!.uid;
 
                     if(profileImage != null){
-                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
+                      final storageRef = FirebaseStorage.instance.ref().child('/Users/$Uname/profile_images/$userID.jpg');
                       await storageRef.putFile(profileImage!);
 
                       String downloadURL = await storageRef.getDownloadURL();
@@ -246,12 +246,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       );
                     }
                     if(isAdmin && CNPJ!.isNotEmpty && nomeLoja!.isNotEmpty){
-                      await FirebaseFirestore.instance.collection('Stores').doc('$nomeLoja${CNPJ!.substring(10)}').set(
+                      await FirebaseFirestore.instance.collection('Stores').doc('$nomeLoja${CNPJ!.substring(8, 12)}').set(
                         {
                           'CNPJ': CNPJ,
                           'store': nomeLoja,
                           'storageID': '',
-                          'employers': []
+                          'employee': [Uname]
                         }
                       );
                     }

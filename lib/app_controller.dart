@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class AppController extends ChangeNotifier{
   static AppController instance = AppController();
@@ -62,6 +63,17 @@ class AppController extends ChangeNotifier{
         .doc(user.uid)
         .get();
       return userData;
+    }
+    return null;
+  }
+
+  Future<DocumentSnapshot?> loadStoredata() async{
+    CollectionReference Storage = FirebaseFirestore.instance.collection('Storage');
+    QuerySnapshot querySnapshot = await Storage.where('CNPJ',isEqualTo: controllerCNPJ).get();
+
+    if(querySnapshot.docs.isNotEmpty){
+      final storageData = querySnapshot.docs.first;
+      return storageData;
     }
     return null;
   }
@@ -138,5 +150,31 @@ class AppController extends ChangeNotifier{
       return image != null ? File(image.path) : null;
     }
     return null;
+  }
+
+  final TextEditingController barcodeController = TextEditingController();
+
+  void OpenScanner(BuildContext context) async {
+
+    MobileScanner scanner = MobileScanner();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(title: Text('Escanear Código de Barras')),
+          body: MobileScanner(
+            onDetect: (barcodeCapture) {
+              final barcode = barcodeCapture.barcodes.first;
+              if (barcode.rawValue != null) {
+                String code = barcode.rawValue!;
+                barcodeController.text = code;
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+        );
+      },
+    );
   }
 }

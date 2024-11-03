@@ -211,61 +211,43 @@ class _OurDrawerState extends State<OurDrawer> {
                 ? const Color.fromARGB(255, 57, 202, 93)
                 : const Color.fromARGB(255, 0, 245, 114)
               ),
-              currentAccountPicture: imageURL != null 
-                ? ElevatedButton(
-                  onPressed: () async{
-                    await pickImage();
+              currentAccountPicture: ElevatedButton(
+                onPressed: () async{
+                  await pickImage();
 
-                    if(profileImage != null){
-                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/${user!.uid}.jpg');
-                      await storageRef.putFile(profileImage!);
-                      String downloadURL = await storageRef.getDownloadURL();
-                    
-                      await FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
-                        {
-                          'imageURL': downloadURL
-                        }
-                      );
-                      loadUserData();
-                    }
+                  if(profileImage != null){
+                    final storageRef = FirebaseStorage.instance.ref().child('/Users/$Uname/profile_images/${user!.uid}.jpg');
+                    await storageRef.putFile(profileImage!);
+                    String downloadURL = await storageRef.getDownloadURL();
+                  
+                    await FirebaseFirestore.instance.collection('Users').doc(user!.uid).update(
+                      {
+                        'imageURL': downloadURL
+                      }
+                    );
+                    loadUserData();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(0),
+                  backgroundBuilder: (context, states, child) {
+                    return Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color.fromARGB(255, 60, 255, 0)
+                      ),
+                      child: imageURL != null 
+                      ? CircleAvatar(
+                        backgroundColor: const Color.fromARGB(255, 0, 245, 114),
+                        backgroundImage: NetworkImage(imageURL!)
+                      )
+                      : const Icon(Icons.person, color: Color.fromARGB(159, 12, 121, 24)),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(0),
-                    backgroundBuilder: (context, states, child) {
-                      return Container(
-                        padding: EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color.fromARGB(255, 60, 255, 0)
-                        ),
-                        child: CircleAvatar(
-                          backgroundColor: const Color.fromARGB(255, 0, 245, 114),
-                          backgroundImage: NetworkImage(imageURL!)
-                        ),
-                      );
-                    },
-                  ),
-                  child: const Text('')
-                )
-                : ElevatedButton(
-                    onPressed: (){
-                      AppController.instance.pickImage(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(0),
-                      backgroundBuilder: (context, states, child) {
-                        return Container(
-                          padding: EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color.fromARGB(255, 60, 255, 0)
-                          ),
-                          child: const Icon(Icons.people)
-                        );
-                      },
-                    ),
-                    child: const Text('')
-                  ),
+                ),
+                child: const Text('')
+              ),
               accountName: name!.split(' ').length > 2 
                 ? Text(
                     '${name!.split(' ').first} ${name!.split(' ')[1][0].toUpperCase()}. ${name!.split(' ').last}', 
@@ -316,7 +298,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                 borderRadius: BorderRadius.circular(10)
                               ),
                               child: ListTile(
-                                title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(10)}', textAlign: TextAlign.center),
+                                title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(8, 12)}', textAlign: TextAlign.center),
                                 onTap: () {
                                   AppController.instance.setStore(stores![i], userCNPJ![i]);
                                   Navigator.of(context).pushReplacementNamed('/storage');
@@ -389,7 +371,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                                       }
                                                     );
                                                     FirebaseFirestore.instance.collection('Stores')
-                                                    .doc('$newStoreName${newCNPJ.substring(10)}')
+                                                    .doc('$newStoreName$newCNPJ')
                                                     .set(
                                                       {
                                                         'CNPJ': newCNPJ,
