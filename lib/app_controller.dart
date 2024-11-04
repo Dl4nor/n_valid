@@ -152,11 +152,10 @@ class AppController extends ChangeNotifier{
     return null;
   }
 
-  final TextEditingController barcodeController = TextEditingController();
+  TextEditingController barcodeController = TextEditingController();
 
-  void OpenScanner(BuildContext context) async {
-
-    MobileScanner scanner = MobileScanner();
+  Future<String> OpenScanner(BuildContext context) async {
+    String? code;
 
     await showDialog(
       context: context,
@@ -167,8 +166,8 @@ class AppController extends ChangeNotifier{
             onDetect: (barcodeCapture) {
               final barcode = barcodeCapture.barcodes.first;
               if (barcode.rawValue != null) {
-                String code = barcode.rawValue!;
-                barcodeController.text = code;
+                code = barcode.rawValue!;
+                barcodeController.text = code!;
                 Navigator.of(context).pop();
               }
             },
@@ -176,5 +175,6 @@ class AppController extends ChangeNotifier{
         );
       },
     );
+    return code!;
   }
 }

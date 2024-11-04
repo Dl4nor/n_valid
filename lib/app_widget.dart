@@ -376,7 +376,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                                       {
                                                         'CNPJ': newCNPJ,
                                                         'store': newStoreName,
-                                                        'employers': [],
+                                                        'employee': [Uname],
                                                         'storageCode': ''
                                                       }
                                                     );

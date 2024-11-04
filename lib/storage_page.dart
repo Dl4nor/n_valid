@@ -147,7 +147,7 @@ class _PageCategoryState extends State<PageCategory> {
     Timestamp? dateEntry;
     int? goodsAmount;
     String? goodsBarcode;
-    String? storageID;
+    String? goodsID;
 
     File? goodsImage;
     String imageName = '';
@@ -158,7 +158,7 @@ class _PageCategoryState extends State<PageCategory> {
     Future<void> pickImage(Function setStateDialog) async {
       final File? image = await AppController.instance.pickImage(context);
       if (image != null) {
-       setStateDialog(() {
+       await setStateDialog(() {
           goodsImage = image;
           imageName = image.path.split('/').last;
         });
@@ -172,19 +172,23 @@ class _PageCategoryState extends State<PageCategory> {
     }
 
     loadStorageData() async {
-      final storageData = await AppController.instance.loadStoredata();
-      storageID = storageData!.id;
-      imageName = storageData['imageURL'];
-      isBatch = storageData['isBatch'];
-      goodsName = storageData['name'];
-      dateEntry = storageData['dateEntry'];
-      expirationDate = storageData['dateExpiration'];
-      goodsAmount = storageData['amount'];
-      goodsBarcode = storageData['barcode'];
+      AppController.instance.barcodeController.clear();
+      setState(() async {
+        final storageData = await AppController.instance.loadStoredata();
+        goodsID = storageData!.id;
+        imageName = storageData['imageURL'];
+        isBatch = storageData['isBatch'];
+        goodsName = storageData['name'];
+        dateEntry = storageData['dateEntry'];
+        expirationDate = storageData['dateExpiration'];
+        goodsAmount = storageData['amount'];
+        goodsBarcode = storageData['barcode'];
+      });
     }
 
     uploadStorageData() async{
       if(goodsImage != null){
+
         await FirebaseFirestore.instance.collection('Storage').add(
           {
             'imageURL': '',
@@ -200,13 +204,19 @@ class _PageCategoryState extends State<PageCategory> {
 
         await loadStorageData();
 
-        final storageRef = FirebaseStorage.instance.ref().child('/Store/$storeCNPJ/goods_images/$storageID.jpg');
+        final storageRef = FirebaseStorage.instance.ref().child('/Stores/$storeCNPJ/goods_images/$goodsID.jpg');
         await storageRef.putFile(goodsImage!);
         String downloadURL = await storageRef.getDownloadURL();
 
-        await FirebaseFirestore.instance.collection('Storage').doc(storageID).update(
+        FirebaseFirestore.instance.collection('Storage').doc(goodsID).update(
           {
             'imageURL': downloadURL
+          }
+        );
+
+        FirebaseFirestore.instance.collection('Stores').doc('$storeName$storeCNPJ').update(
+          {
+            'storage': FieldValue.arrayUnion([goodsID])
           }
         );
       } 
@@ -223,6 +233,15 @@ class _PageCategoryState extends State<PageCategory> {
           }
         );
       }
+    }
+
+    clearStoageData(){
+      isBatch = false;
+      goodsName = null;
+      expirationDate = null;
+      goodsAmount = null;
+      goodsBarcode = null;
+      expiration = 'dd / mm / yyyy';
     }
 
     loadUserData() async {
@@ -296,25 +315,26 @@ class _PageCategoryState extends State<PageCategory> {
                       .where('userName', isEqualTo: unameFuncionario)
                       .get();
 
-                    if(userNameSnapshot.docs.isNotEmpty){
+                    bool isEmployee = userNameSnapshot.docs.where((doc) => doc['CNPJ'] == storeCNPJ).toList().isNotEmpty;
+
+                    if(userNameSnapshot.docs.isNotEmpty && !isEmployee){
                       FirebaseFirestore.instance
                       .collection('Users')
                       .doc(userNameSnapshot.docs[0].id)
                       .update(
                         {
-                          'CNPJ': [storeCNPJ],
-                          'store': [storeName]
+                          'CNPJ': FieldValue.arrayUnion([storeCNPJ]),
+                          'store': FieldValue.arrayUnion([storeName])
                         }
                       );
                       FirebaseFirestore.instance
-                      .collection('Store')
+                      .collection('Stores')
                       .doc('$storeName$storeCNPJ')
                       .update(
                        {
-                          'employee': [userNameSnapshot.docs[0].get('Uname')]
+                          'employee': FieldValue.arrayUnion([userNameSnapshot.docs[0].get('userName').toString()])
                        } 
                       );
-                      await AppController.instance.loadUserData();
                       Navigator.of(context, rootNavigator: true).pop();
                     }
                     else if(nomeFuncionario.split(' ').length < 2){
@@ -375,7 +395,7 @@ class _PageCategoryState extends State<PageCategory> {
                         side: const BorderSide(color: Color.fromARGB(255, 0, 255, 47))
                       )
                     ),
-                    onPressed: () async {
+                    onPressed: () {
                       pickImage(setStateDialog);
                     }, 
                     child: goodsImage == null
@@ -400,8 +420,8 @@ class _PageCategoryState extends State<PageCategory> {
                     labelText: "Código do produto",
                     suffixIcon: IconButton(
                       icon: Icon(Icons.camera_alt_outlined),
-                      onPressed: () {
-                        AppController.instance.OpenScanner(context);
+                      onPressed: () async{
+                        goodsBarcode = await AppController.instance.OpenScanner(context);
                       },
                     )
                   ),
@@ -505,6 +525,7 @@ class _PageCategoryState extends State<PageCategory> {
                 ElevatedButton(
                   onPressed: (){
                     uploadStorageData();
+                    loadStorageData();
                     Navigator.of(context, rootNavigator: true).pop();
                   }, 
                   child: Text("Cadastrar"),
@@ -580,7 +601,6 @@ class _PageCategoryState extends State<PageCategory> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      AppController.instance.barcodeController.clear();
                       return dialogBoxGoodsRegistration(context);
                     }
                   );
