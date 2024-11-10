@@ -67,7 +67,18 @@ class AppController extends ChangeNotifier{
     return null;
   }
 
-  Future<DocumentSnapshot?> loadStoredata() async{
+  Future<DocumentSnapshot?> loadStoreData() async {
+    CollectionReference store = FirebaseFirestore.instance.collection('Stores');
+    QuerySnapshot querySnapshot = await store.where('CNPJ', isEqualTo: controllerCNPJ).get();
+
+    if(querySnapshot.docs.isNotEmpty){
+      final storeData = querySnapshot.docs.first;
+      return storeData;
+    }
+    return null;
+  }
+
+  Future<DocumentSnapshot?> loadStorageData() async{
     CollectionReference Storage = FirebaseFirestore.instance.collection('Storage');
     QuerySnapshot querySnapshot = await Storage.where('CNPJ',isEqualTo: controllerCNPJ).get();
 

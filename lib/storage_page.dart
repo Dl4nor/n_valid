@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,12 +28,6 @@ class _StoragePageState extends State<StoragePage> {
   ];
   late PageController _pageController;
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: 0);
-  }
-
   void updatePressed(int index) {
     setState(() {
       for (int i = 0; i < pressed.length; i++) {
@@ -52,8 +44,71 @@ class _StoragePageState extends State<StoragePage> {
     });
   }
 
+  Future<Map<String, List<DocumentSnapshot>>> defineCategory() async{
+    try{
+      CollectionReference storageCollection = FirebaseFirestore.instance.collection('Storage');
+      QuerySnapshot storage = await storageCollection.where('CNPJ', isEqualTo: AppController.instance.controllerCNPJ).get();
+      DateTime now = DateTime.now();
+
+      Map<String, List<DocumentSnapshot>> categorizedStorage = {
+        'danger': [],
+        'caution': [],
+        'fine': []
+      };
+
+      for(var doc in storage.docs){
+        DateTime expirationDate = doc['dateExpiration'].toDate();
+        DateTime entryDate = doc['dateEntry'].toDate();
+
+        int daysToExpiration = expirationDate.difference(now).inDays;
+        int totalDays = expirationDate.difference(entryDate).inDays;
+
+        if (daysToExpiration < (totalDays/4)) {
+          categorizedStorage['danger']!.add(doc);
+        } else if (daysToExpiration >= (totalDays/4) && daysToExpiration < (totalDays/2)) {
+          categorizedStorage['caution']!.add(doc);
+        } else {
+          categorizedStorage['fine']!.add(doc);
+        }
+        print(expirationDate);
+        print(entryDate);
+        print(daysToExpiration);
+      }
+      
+      return categorizedStorage;
+    } catch(e){
+      print('Erro ao tentar carregar documentos: $e');
+      return {
+        'danger': [],
+        'caution': [],
+        'fine': []
+      };
+    }
+  }
+
+  Map<String, List<DocumentSnapshot>>? categorizedStorage;
+  bool isLoading = true;
+  Future<void> _loadCategories() async {
+    categorizedStorage = await defineCategory();
+    setState(() {
+      isLoading = false;
+      print(categorizedStorage);
+    });
+  }
+
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _loadCategories();
+  }
+
+  @override
+  Widget build(BuildContext context){
+    
+    if(isLoading){
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Scaffold(
       drawer: const OurDrawer(),
@@ -68,9 +123,9 @@ class _StoragePageState extends State<StoragePage> {
               });
             },
             children: [
-              PageCategory(pressedColors: pressedColors, isPressed: 0, name: "Yogurte", days: 2),
-              PageCategory(pressedColors: pressedColors, isPressed: 1, name: "Leite Jussara 2L", days: 30),
-              PageCategory(pressedColors: pressedColors, isPressed: 2, name: "Arroz Tio João 5Kg", days: 197)
+              PageCategory(pressedColors: pressedColors, isPressed: 0, categorizedStorage: categorizedStorage?['danger'] ?? []),
+              PageCategory(pressedColors: pressedColors, isPressed: 1, categorizedStorage: categorizedStorage?['caution'] ?? []),
+              PageCategory(pressedColors: pressedColors, isPressed: 2, categorizedStorage: categorizedStorage?['fine'] ?? [])
             ],
           ),
           Column(
@@ -104,15 +159,13 @@ class _StoragePageState extends State<StoragePage> {
 class PageCategory extends StatefulWidget {
   final int isPressed;
   final List<Color> pressedColors;
-  final String name;
-  final int days;
+  final List<DocumentSnapshot> categorizedStorage;
 
   const PageCategory({
     super.key, 
     required this.pressedColors, 
     required this.isPressed, 
-    required this.name, 
-    required this.days
+    required this.categorizedStorage,
   });
   
   @override
@@ -123,44 +176,38 @@ class _PageCategoryState extends State<PageCategory> {
   
   get isPressed => widget.isPressed;
   get pressedColors => widget.pressedColors;
-  get name => widget.name;
-  get days => widget.days;
+  get categorizedStorage => widget.categorizedStorage;
 
   @override
   Widget build(BuildContext context) {
 
-    String today = "${DateTime.now().day.toString().padLeft(2, '0')} / "
-                   "${DateTime.now().month.toString().padLeft(2, '0')} / "
-                   "${DateTime.now().year}";
-    DateTime todayDate = DateTime.now();
+    String entryDate = "${DateTime.now().day.toString().padLeft(2, '0')} / "
+                       "${DateTime.now().month.toString().padLeft(2, '0')} / "
+                       "${DateTime.now().year}";
     String expiration = "dd / mm / yyyy";
-    int dias = 0;
 
-    String nomeFuncionario = '';
-    String telFuncionario = '';
-    String errorText = '';
-    bool? isManager;
+
 
     bool isBatch = false;
     String? goodsName;
     Timestamp? expirationDate;
-    Timestamp? dateEntry;
+    Timestamp? entryTimestamp;
     int? goodsAmount;
     String? goodsBarcode;
     String? goodsID;
 
     File? goodsImage;
-    String imageName = '';
 
     String? storeCNPJ = AppController.instance.controllerCNPJ;
     String? storeName = AppController.instance.controllerStoreName;
+    String? userUname;
+    bool isManager = false;
 
     Future<void> pickImage(Function setStateDialog) async {
       final File? image = await AppController.instance.pickImage(context);
       if (image != null) {
        await setStateDialog(() {
           goodsImage = image;
-          imageName = image.path.split('/').last;
         });
       }
     }
@@ -172,18 +219,13 @@ class _PageCategoryState extends State<PageCategory> {
     }
 
     loadStorageData() async {
-      AppController.instance.barcodeController.clear();
-      setState(() async {
-        final storageData = await AppController.instance.loadStoredata();
-        goodsID = storageData!.id;
-        imageName = storageData['imageURL'];
-        isBatch = storageData['isBatch'];
-        goodsName = storageData['name'];
-        dateEntry = storageData['dateEntry'];
-        expirationDate = storageData['dateExpiration'];
-        goodsAmount = storageData['amount'];
-        goodsBarcode = storageData['barcode'];
-      });
+      final storageData = await AppController.instance.loadStorageData();
+      goodsID = storageData!.id;
+      isBatch = storageData['isBatch'];
+      goodsName = storageData['name'];
+      expirationDate = storageData['dateExpiration'];
+      goodsAmount = storageData['amount'];
+      goodsBarcode = storageData['barcode'];
     }
 
     uploadStorageData() async{
@@ -194,7 +236,7 @@ class _PageCategoryState extends State<PageCategory> {
             'imageURL': '',
             'isBatch': isBatch,
             'name': goodsName,
-            'dateEntry': Timestamp.fromDate(DateTime.now()),
+            'dateEntry': entryTimestamp,
             'dateExpiration': expirationDate,
             'amount': goodsAmount,
             'barcode': goodsBarcode,
@@ -223,9 +265,10 @@ class _PageCategoryState extends State<PageCategory> {
       else {
         await FirebaseFirestore.instance.collection('Storage').add(
           {
+            'imageURL': '',
             'isBatch': isBatch,
             'name': goodsName,
-            'dateEntry': Timestamp.fromDate(DateTime.now()),
+            'dateEntry': entryTimestamp,
             'dateExpiration': expirationDate,
             'amount': goodsAmount,
             'barcode': goodsBarcode,
@@ -235,136 +278,29 @@ class _PageCategoryState extends State<PageCategory> {
       }
     }
 
-    clearStoageData(){
+    loadUserData() async {
+      final userData = await AppController.instance.loadUserData();
+      final storeData = await AppController.instance.loadStoreData();
+      userUname = await userData!['userName'];
+      List<dynamic> storeManagers = await storeData!['managers'];
+      if(storeManagers.contains(userUname)){
+        isManager = true;
+      }
+    }
+
+    loadUserData();
+
+    @override
+    void clearGoodsContent() {
       isBatch = false;
       goodsName = null;
       expirationDate = null;
       goodsAmount = null;
       goodsBarcode = null;
+      goodsID = null;
+      goodsImage = null;
       expiration = 'dd / mm / yyyy';
-    }
-
-    loadUserData() async {
-      final userData = await AppController.instance.loadUserData();
-      isManager = userData!['isManager'];
-    }
-
-    loadUserData();
-
-    Widget dialogBoxEmployeeRegistration(BuildContext context){
-      return StatefulBuilder(builder: (context, setStateDialog){
-        return AlertDialog(
-          title: const Text(
-            "Cadastrar Funcionário",
-            style: TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.bold
-            ), 
-            textAlign: TextAlign.center
-          ),
-          content: Column(
-          mainAxisSize: MainAxisSize.min,
-            children: [
-              if(errorText.isNotEmpty)
-                Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    errorText, 
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold
-                    )
-                  )
-                ),
-              TextField(
-                onChanged: (text){
-                  nomeFuncionario = text;
-                },
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                  labelText: "Nome completo do Funcionário"
-                )
-              ),
-              Container(height: 10),
-              TextField(
-                onChanged: (text){
-                  telFuncionario = text;
-                },
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(50))),
-                  labelText: "Telefone do Funcionário"
-                ),
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(11),
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-              ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () async{
-                  if(nomeFuncionario.isNotEmpty && telFuncionario.isNotEmpty){
-                    String firstLetter = nomeFuncionario.split(' ').first[0];
-                    String lastName = nomeFuncionario.split(' ').last;
-                    String last4Digits = telFuncionario.substring(7);
-                    String unameFuncionario = '$firstLetter$lastName$last4Digits';
-                    QuerySnapshot userNameSnapshot = await FirebaseFirestore.instance
-                      .collection('Users')
-                      .where('userName', isEqualTo: unameFuncionario)
-                      .get();
-
-                    bool isEmployee = userNameSnapshot.docs.where((doc) => doc['CNPJ'] == storeCNPJ).toList().isNotEmpty;
-
-                    if(userNameSnapshot.docs.isNotEmpty && !isEmployee){
-                      FirebaseFirestore.instance
-                      .collection('Users')
-                      .doc(userNameSnapshot.docs[0].id)
-                      .update(
-                        {
-                          'CNPJ': FieldValue.arrayUnion([storeCNPJ]),
-                          'store': FieldValue.arrayUnion([storeName])
-                        }
-                      );
-                      FirebaseFirestore.instance
-                      .collection('Stores')
-                      .doc('$storeName$storeCNPJ')
-                      .update(
-                       {
-                          'employee': FieldValue.arrayUnion([userNameSnapshot.docs[0].get('userName').toString()])
-                       } 
-                      );
-                      Navigator.of(context, rootNavigator: true).pop();
-                    }
-                    else if(nomeFuncionario.split(' ').length < 2){
-                      setStateDialog((){
-                        errorText = "Nome não está completo";
-                      });
-                    }
-                    else if(telFuncionario.length < 11) {
-                      setStateDialog((){
-                        errorText = "Número de Telefone inválido";
-                      });
-                    }
-                    else{
-                      setStateDialog((){
-                        errorText = "Usuário não encontrado";
-                      });
-                    }
-                  }
-                  else {
-                    setStateDialog((){
-                      errorText = "Nada a consultar";
-                    });
-                  }
-                }, 
-                child: const Text('Cadastrar Funcionário')
-              )
-            ],
-          ),
-        );
-      });
+      AppController.instance.barcodeController.clear();
     }
 
     Widget dialogBoxGoodsRegistration(BuildContext context){
@@ -450,11 +386,21 @@ class _PageCategoryState extends State<PageCategory> {
                         showDatePicker(
                           context: context, 
                           initialDate: DateTime.now(),
-                          firstDate: DateTime.now(), 
+                          firstDate: DateTime(2000), 
                           lastDate: DateTime.now(),
-                        );
+                        ).then((selectedDate){
+                          if(selectedDate != null){
+                            setStateDialog((){
+                              entryDate = 
+                                "${selectedDate.day.toString().padLeft(2, '0')} / "
+                                "${selectedDate.month.toString().padLeft(2, '0')} / "
+                                "${selectedDate.year}";
+                              entryTimestamp = Timestamp.fromDate(selectedDate);
+                            });
+                          }
+                        });
                       }, 
-                      child: Text(today)
+                      child: Text(entryDate)
                     )
                   ],
                 ),
@@ -478,9 +424,6 @@ class _PageCategoryState extends State<PageCategory> {
                                   "${selectedDate.month.toString().padLeft(2, '0')} / "
                                   "${selectedDate.year}"; 
                                 expirationDate = Timestamp.fromDate(selectedDate);
-                                // Essa parte conta os dias até um produto vencer 🏆:
-                                dias = expirationDate!.toDate().difference(todayDate).inDays;
-                                print("$dias");
                               });
                             }
                         });
@@ -525,7 +468,6 @@ class _PageCategoryState extends State<PageCategory> {
                 ElevatedButton(
                   onPressed: (){
                     uploadStorageData();
-                    loadStorageData();
                     Navigator.of(context, rootNavigator: true).pop();
                   }, 
                   child: Text("Cadastrar"),
@@ -552,34 +494,6 @@ class _PageCategoryState extends State<PageCategory> {
                 textAlign: TextAlign.center
               ),
             ),
-            if(isManager!)
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                decoration: BoxDecoration(
-                  border: Border.symmetric(horizontal: BorderSide(width: 2)),
-                  borderRadius: BorderRadius.circular(10)
-                ),
-                child: ListTile(
-                    title: const Row(
-                      children: [
-                        Icon(Icons.person_add_alt_rounded),
-                        SizedBox(width: 20),
-                        Text(
-                          'Cadastrar funcionário', 
-                          textAlign: TextAlign.center
-                        )
-                      ],
-                    ),
-                  onTap: () {
-                    showDialog(
-                      context: context, 
-                      builder: (BuildContext context) {
-                        return dialogBoxEmployeeRegistration(context);
-                      },
-                    );
-                  },
-                ),
-              ),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
               decoration: BoxDecoration(
@@ -598,6 +512,8 @@ class _PageCategoryState extends State<PageCategory> {
                     ],
                   ),
                 onTap: () {
+                  clearGoodsContent();
+                  
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
@@ -625,42 +541,85 @@ class _PageCategoryState extends State<PageCategory> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  ElevatedButton(
-                    style: const ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(Colors.transparent),
-                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                      padding: WidgetStatePropertyAll(EdgeInsets.zero)
-                    ),
-                    child: Icon(Icons.my_library_add, size: 40, color: Colors.white),
-                    onPressed: (){
-                      showModalBottomSheet(
-                        context: context, 
-                        builder: (BuildContext context){
-                          return modalBottomRegistration(context);
-                        }
-                      );
-                    },
-                  ),
                   Expanded(
                     child: Card(
                       shape: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(100), 
+                        borderRadius: BorderRadius.circular(20), 
                         borderSide: BorderSide(
-                          color: pressedColors[isPressed].withOpacity(0.8)
+                          color: Colors.transparent,
                         )
                       ), 
                       child: TextField(
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(100)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: pressedColors[isPressed].withOpacity(0.6))
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: pressedColors[isPressed])
+                          ),
                           labelText: "Pesquisar produto",
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8)
+                          labelStyle: TextStyle(color: pressedColors[isPressed].withOpacity(0.9)),
+                          floatingLabelStyle: TextStyle(color: pressedColors[isPressed]),
                         ),
                         onChanged: (text){
                           
                         },
+                        onTapOutside: (event) {
+                          FocusScope.of(context).unfocus();
+                        },
                       ),
                     ),
                   ),
+                  PopupMenuButton(
+                    icon: const Icon(Icons.more_vert, size: 40, color: Colors.white),
+                    onSelected: (val) {
+                      switch (val) {
+                        case 'cadastrar':
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return modalBottomRegistration(context);
+                            },
+                          );
+                          break;
+                        case 'gerenciar':
+                          Navigator.pushNamed(context, '/storage/management');
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem(
+                          value: 'cadastrar',
+                          child: Row(
+                            children: [
+                              Icon(Icons.my_library_add, size: 20, color: Colors.white),
+                              SizedBox(width: 10),
+                              Text("Menu de cadastros")
+                            ],
+                          ),
+                        ),
+                        if(isManager)
+                          const PopupMenuItem(
+                            value: 'gerenciar',
+                            child: Row(
+                              children: [
+                                Icon(Icons.people, size: 20, color: Colors.white),
+                                SizedBox(width: 10),
+                                Text("Gerenciar funcionários")
+                              ],
+                            ),
+                          ),
+                      ];
+                    },
+                    color: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  )
                 ]
               ),
             ),
@@ -670,27 +629,62 @@ class _PageCategoryState extends State<PageCategory> {
                   padding: const EdgeInsets.all(8.0) + const EdgeInsets.only(bottom: 55),
                   child: Table(
                     children: [
-                      for (int i=0;i<30;i++)
-                      TableRow(
-                        decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(width: 0.3))),
-                        children: [
-                        Container(
-                          height: 40,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
-                          child: const ImageIcon(AssetImage("assets/images/box.png")),
+                      for (var doc in categorizedStorage)
+                        TableRow(
+                          decoration: const BoxDecoration(
+                            border: Border.symmetric(
+                              horizontal: BorderSide(width: 0.3)
+                            ),
+                          ),
+                          children: [
+                            Container(
+                              height: 50,
+                              margin: EdgeInsets.all(2) + EdgeInsets.symmetric(vertical: 5),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
+                              child: doc['imageURL'].isEmpty
+                               ? const ImageIcon(AssetImage('assets/images/box.png'))
+                               : Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: pressedColors[isPressed].withOpacity(0.7),
+                                  ),
+                                  child: CircleAvatar(
+                                      backgroundImage: NetworkImage(doc['imageURL']),
+                                    ),
+                                ),
+                            ),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxHeight: 60,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(2)+EdgeInsets.symmetric(vertical: 5), 
+                                child: Text(
+                                  doc['name'], 
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 17
+                                  ), 
+                                  textAlign: TextAlign.start
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(2)+EdgeInsets.symmetric(vertical: 18), 
+                              child: Text(
+                                '${doc['dateExpiration'].toDate().difference(DateTime.now()).inDays} Dias', 
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 17
+                                ), 
+                                textAlign: TextAlign.center
+                              ),
+                            )
+                          ]
                         ),
-                        Padding(
-                          padding: EdgeInsets.all(2), 
-                          child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.start),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(2), 
-                          child: Text('$days Dias', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
-                        )
-                        ]
-                      )
-                    ],
-                  ),
+                      ],
+                  )
                 ),
               ),
             ),

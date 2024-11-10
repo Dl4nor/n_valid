@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/home_page.dart';
 import 'package:n_valid/login_page.dart';
+import 'package:n_valid/management_page.dart';
 import 'package:n_valid/register_page.dart';
 import 'package:n_valid/settings_page.dart';
 import 'package:n_valid/storage_page.dart';
@@ -35,7 +35,8 @@ class AppWidget extends StatelessWidget{
             '/register': (context) => const RegisterPage(),
             '/home': (context) => const HomePage(),
             '/storage': (context) => const StoragePage(),
-            '/settings': (context) => const SettingsPage()
+            '/storage/management': (context) => const ManagementPage(),
+            '/settings': (context) => const SettingsPage(),
           }
         )
     );
@@ -146,7 +147,6 @@ class _OurDrawerState extends State<OurDrawer> {
   String? imageURL;
   List<dynamic>? stores;
   List<dynamic>? userCNPJ;
-  bool? isManager;
   bool isLoading = true;
   String newCNPJ = '';
   String newStoreName = '';
@@ -164,7 +164,6 @@ class _OurDrawerState extends State<OurDrawer> {
         email = userData['mail'];
         stores = userData['store'];
         userCNPJ = userData['CNPJ'];
-        isManager = userData['isManager'];
         imageURL = userData['imageURL'];
         isLoading = false;  
       });
@@ -177,7 +176,6 @@ class _OurDrawerState extends State<OurDrawer> {
     email = null; 
     stores = null; 
     userCNPJ = null;
-    isManager = null; 
     imageURL =  null;
     isLoading = false;  
   }
@@ -305,7 +303,6 @@ class _OurDrawerState extends State<OurDrawer> {
                                 },
                               ),
                             ),
-                          if(isManager!)
                             ListTile(
                               title: Container(
                                 padding: EdgeInsets.symmetric(vertical: 5),
@@ -376,8 +373,9 @@ class _OurDrawerState extends State<OurDrawer> {
                                                       {
                                                         'CNPJ': newCNPJ,
                                                         'store': newStoreName,
-                                                        'employee': [Uname],
-                                                        'storageCode': ''
+                                                        'managers': [Uname],
+                                                        'employees': [Uname],
+                                                        'storage': ''
                                                       }
                                                     );
 
@@ -470,7 +468,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
     return 
         Padding(
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.all(6.0) + EdgeInsets.symmetric(horizontal: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
