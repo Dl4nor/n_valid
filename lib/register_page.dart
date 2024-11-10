@@ -20,11 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String telefone = '';
   String nomeCompleto = '';
   String Uname = '';
-  String? CNPJ;
-  String? nomeLoja;
   File? profileImage;
   String imageName = '';
-  bool isAdmin = false;
 
   bool emailError = false;
   bool nomeError = false;
@@ -49,12 +46,6 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     }
 
-    void updateCheckBox(){
-      setState(() {
-        isAdmin = !isAdmin;
-      });
-    }
-
     bool ValidateFields(){
       setState(() {
         emailError = email.isEmpty;
@@ -75,24 +66,6 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     }
 
-    Widget buildAdminField() {
-      return Column(
-        children: [
-          CustomTextField(
-            labelText: "CNPJ da loja",
-            maxLength: 14,
-            textInputType: TextInputType.number,
-            onChanged: (text) {CNPJ = text;},
-          ),
-      
-          CustomTextField(
-            labelText: "Nome da Loja",
-            onChanged: (text) {nomeLoja = text;},
-          ),
-        ],
-      );
-    }
-
     return Scaffold(
       appBar: OurAppBar(textTitle: 'Registro'),
       body: SingleChildScrollView(
@@ -100,6 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
+              margin: EdgeInsets.symmetric(vertical: MediaQuery.sizeOf(context).height*0.02),
               padding: const EdgeInsets.all(10.0),
               height: 200,
               width: 200,
@@ -167,103 +141,86 @@ class _RegisterPageState extends State<RegisterPage> {
               error: senhaError,
               errorText: "Senha precisa ser preenchida",
             ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(
-                  activeColor: Colors.green,
-                  value: isAdmin,
-                  onChanged: (x) {
-                    updateCheckBox();
-                  }),
-                  Text('É um gerente/líder?')
-              ],
-            ),
-            if(isAdmin) 
-              buildAdminField(),
-
+            SizedBox(height: MediaQuery.sizeOf(context).height*0.02),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: ElevatedButton(
-                onPressed: () async{
-
-                  final BuildContext dailogContext = context;
-
-                  showDialog(
-                    context: dailogContext,
-                    barrierDismissible: false,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: Colors.transparent,
-                      content: Container(
-                        height: 60,
-                        child: Center(child: CircularProgressIndicator()),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 119, 245, 178),
+                  borderRadius: BorderRadius.circular(25)
+                ),
+                padding: EdgeInsets.all(1),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 107, 218, 111),
+                    fixedSize: Size(MediaQuery.sizeOf(context).width*0.5, 50),
+                    foregroundColor: const Color.fromARGB(192, 0, 0, 0),
+                  ),
+                  child: const Text('Registrar', style: TextStyle(fontSize: 18),),
+                  onPressed: () async{
+                
+                    final BuildContext dailogContext = context;
+                
+                    showDialog(
+                      context: dailogContext,
+                      barrierDismissible: false,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Colors.transparent,
+                        content: Container(
+                          height: 60,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
                       ),
-                    ),
-                  );
-
-                  if(ValidateFields()){
-                    generateUname(nomeCompleto, telefone);
-
-                    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                      email: email, 
-                      password: senha
                     );
-
-                    String userID = userCredential.user!.uid;
-
-                    if(profileImage != null){
-                      final storageRef = FirebaseStorage.instance.ref().child('$Uname/profile_images/$userID.jpg');
-                      await storageRef.putFile(profileImage!);
-
-                      String downloadURL = await storageRef.getDownloadURL();
-                    
-                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
-                        {
-                          'name': nomeCompleto,
-                          'userName': Uname,
-                          'phone': telefone,
-                          'mail': email,
-                          'isManager': isAdmin,
-                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
-                          'store': FieldValue.arrayUnion([nomeLoja]),
-                          'imageURL': downloadURL
-                        }
+                
+                    if(ValidateFields()){
+                      generateUname(nomeCompleto, telefone);
+                
+                      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: email, 
+                        password: senha
                       );
-                    } 
-                    else {
-                      await FirebaseFirestore.instance.collection('Users').doc(userID).set(
-                        {
-                          'name': nomeCompleto,
-                          'userName': Uname,
-                          'phone': telefone,
-                          'mail': email,
-                          'isManager': isAdmin,
-                          'CNPJ': FieldValue.arrayUnion([CNPJ]),
-                          'store': FieldValue.arrayUnion([nomeLoja]),
-                          'imageURL': null,
-                        }
-                      );
+                
+                      String userID = userCredential.user!.uid;
+                
+                      if(profileImage != null){
+                        final storageRef = FirebaseStorage.instance.ref().child('/Users/$Uname/profile_images/$userID.jpg');
+                        await storageRef.putFile(profileImage!);
+                
+                        String downloadURL = await storageRef.getDownloadURL();
+                      
+                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                          {
+                            'name': nomeCompleto,
+                            'userName': Uname,
+                            'phone': telefone,
+                            'mail': email,
+                            'CNPJ': [],
+                            'store': [],
+                            'imageURL': downloadURL
+                          }
+                        );
+                      } 
+                      else {
+                        await FirebaseFirestore.instance.collection('Users').doc(userID).set(
+                          {
+                            'name': nomeCompleto,
+                            'userName': Uname,
+                            'phone': telefone,
+                            'mail': email,
+                            'CNPJ': [],
+                            'store': [],
+                            'imageURL': null,
+                          }
+                        );
+                      }
+                      await Future.delayed(Duration(milliseconds: 200));
+                      Navigator.of(context, rootNavigator: true).pop();
+                      await Future.delayed(Duration(milliseconds: 200));
+                      Navigator.of(context).pop();
                     }
-                    if(isAdmin && CNPJ!.isNotEmpty && nomeLoja!.isNotEmpty){
-                      await FirebaseFirestore.instance.collection('Stores').doc('$nomeLoja${CNPJ!.substring(10)}').set(
-                        {
-                          'CNPJ': CNPJ,
-                          'store': nomeLoja,
-                          'storageID': '',
-                          'employers': []
-                        }
-                      );
-                    }
-
-                    Navigator.of(context, rootNavigator: true).pop(); // Fecha o Loading
-                    Navigator.of(context).pushReplacementNamed('/');
-                  } else {
-                    await Future.delayed(Duration(milliseconds: 200));
-                    Navigator.of(context, rootNavigator: true).pop();
-                  }
-                }, 
-                child: Text('Registrar')
+                  }, 
+                ),
               ),
             )
           ],
