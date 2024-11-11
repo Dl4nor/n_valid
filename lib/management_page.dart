@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:n_valid/app_controller.dart';
+import 'package:n_valid/app_widget.dart';
 
 class ManagementPage extends StatefulWidget {
   const ManagementPage({super.key});
@@ -19,6 +20,8 @@ class _ManagementPageState extends State<ManagementPage> {
   DocumentSnapshot<Object?>? currenteUserData;
   bool isSearching = false;
   bool isPressing = false;
+  bool exitError = false;
+  FocusNode searchFocusNode = FocusNode();
   String? pressed;
   final TextEditingController searchController = TextEditingController();
 
@@ -116,7 +119,7 @@ class _ManagementPageState extends State<ManagementPage> {
                 if(nomeFuncionario.isNotEmpty && telFuncionario.isNotEmpty){
                   detectUsername(nomeFuncionario, telFuncionario);
 
-                  bool isEmployee = userNameSnapshot!.docs.where((doc) => doc['CNPJ'] == storeData!['CNPJ']).toList().isNotEmpty;
+                  bool isEmployee = userNameSnapshot!.docs.where((doc) => doc['CNPJ'] == storeData?['CNPJ']).toList().isNotEmpty;
 
                   if(userNameSnapshot!.docs.isNotEmpty && !isEmployee){
                     FirebaseFirestore.instance
@@ -186,14 +189,23 @@ class _ManagementPageState extends State<ManagementPage> {
 
   void loadEmployeeList() async{
     final employeeData = await FirebaseFirestore.instance.collection('Users');
-    QuerySnapshot employeeList = await employeeData.where('CNPJ', arrayContains: AppController.instance.controllerCNPJ!).get();
+    QuerySnapshot employeeList = await employeeData.where('CNPJ', arrayContains: AppController.controllerCNPJ!).get();
 
     if(employeeList.docs.isNotEmpty){
       storeEmployeeList = employeeList.docs;
       setState(() {
         storeEmployeeList.sort((a, b) {
-          bool aIsManager = storeData!['managers'].contains(a!['userName']);
-          bool bIsManager = storeData!['managers'].contains(b!['userName']);
+          bool aIsCurrentUser = a?['userName'] == currenteUserData?['userName'];
+          bool bIsCurrentUser = b?['userName'] == currenteUserData?['userName'];
+          bool aIsManager = storeData?['managers'].contains(a?['userName']);
+          bool bIsManager = storeData?['managers'].contains(b?['userName']);
+
+          if(aIsCurrentUser && !bIsCurrentUser){
+            return -1;
+          }
+          if(!aIsCurrentUser && bIsCurrentUser){
+            return 1;
+          }
 
           if(aIsManager && !bIsManager){
             return -1;
@@ -225,7 +237,9 @@ class _ManagementPageState extends State<ManagementPage> {
           'managers': FieldValue.arrayRemove([userName])
         }
       );
+      exitError = false;
     } else{
+      exitError = true;
       showDialog(
         context: context, 
         builder: (BuildContext context){
@@ -291,6 +305,9 @@ class _ManagementPageState extends State<ManagementPage> {
         }
       );
     }
+    if(!exitError && doc['userName'] == currenteUserData!['userName']){
+      Navigator.of(context).pushReplacementNamed('/home');
+    }
   }
 
   @override
@@ -299,6 +316,7 @@ class _ManagementPageState extends State<ManagementPage> {
       appBar: AppBar(
         title: isSearching
           ? TextField(
+            focusNode: searchFocusNode,
             controller: searchController,
             autofocus: true,
             style: const TextStyle(color: Colors.white),
@@ -311,28 +329,24 @@ class _ManagementPageState extends State<ManagementPage> {
               filterEmployeeList(text);
             },
             onTapOutside: (event){
-              FocusScope.of(context).unfocus();
+              searchFocusNode.unfocus();
             },
           )
           : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                AppController.instance.controllerStoreName!, 
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 255, 255, 255),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold
-                )
+              TextWithBorder(
+                text: AppController.controllerStoreName!, 
+                size: 18,
+                color: Colors.white,
+                weight: FontWeight.bold,
               ),
-              Text(
-                AppController.instance.controllerCNPJ!.substring(8, 12),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.left,
-              )
+              TextWithBorder(
+                text: AppController.controllerCNPJ!.substring(8, 12), 
+                size: 12,
+                color: Colors.white,
+                weight: FontWeight.bold,
+              ),
             ],
           ),
         backgroundColor: const Color.fromARGB(171, 62, 150, 62),
@@ -431,6 +445,7 @@ class _ManagementPageState extends State<ManagementPage> {
                   for(var doc in filteredEmployeeList) ...[
                     GestureDetector(
                       onLongPressStart: (details) async{
+                        HapticFeedback.lightImpact();
                         final selectedOption = await showMenu<String>(
                           context: context,
                           position: RelativeRect.fromLTRB(
@@ -508,7 +523,6 @@ class _ManagementPageState extends State<ManagementPage> {
                             break;
                           case 'sair':
                             dismissEmployee(doc);
-                            Navigator.of(context).pushReplacementNamed('/home');
                             break;
                         }
                       },
@@ -566,8 +580,9 @@ class _ManagementPageState extends State<ManagementPage> {
                               children: [
                                 Text(
                                   doc['name'].split(' ').length < 3
-                                  ? doc['name']
-                                  : '${doc['name'].split(' ').first} ${doc['name'].split(' ')[1][0].toUpperCase()}. ${doc['name'].split(' ').last}',
+                                  ? doc['name'] + (doc['userName'] == currenteUserData?['userName'] ? ' (Você)' : "")
+                                  : '${doc['name'].split(' ').first} ${doc['name'].split(' ')[1][0].toUpperCase()}. '
+                                     '${doc['name'].split(' ').last}${doc['userName'] == currenteUserData?['userName'] ? ' (Você)' : ""}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16

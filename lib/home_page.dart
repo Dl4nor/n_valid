@@ -18,7 +18,10 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const OurDrawer(),
-      appBar: OurAppBar(textTitle: 'N. Valid',),
+      appBar: OurAppBar(
+        textTitle: 'Validad',
+        sizeTitle: 26,
+      ),
       
       body: Stack(
         children: [ 

@@ -51,37 +51,45 @@ class TextWithBorder extends StatelessWidget {
   final Color color;
   final FontWeight weight;
   final Color borderColor;
+  final TextAlign textAlign;
 
-  const TextWithBorder({super.key, required this.text, 
-                                   this.font = '', 
-                                   required this.size, 
-                                   this.color = Colors.black, 
-                                   this.borderColor = Colors.black, 
-                                   this.weight = FontWeight.normal});
+  const TextWithBorder({
+    super.key, 
+    required this.text, 
+    this.font = '', 
+    required this.size, 
+    this.color = Colors.black, 
+    this.borderColor = Colors.black, 
+    this.weight = FontWeight.normal,
+    this.textAlign = TextAlign.center
+  });
 
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
-                  Text(text, 
-                        style: TextStyle(
-                                fontFamily: font, 
-                                fontSize: size,
-                                fontWeight: weight,
-                                foreground: Paint()
-                                  ..style = PaintingStyle.stroke
-                                  ..strokeWidth = 2
-                                  ..color = borderColor,
-                                )
-                  ),
-                  Text(text, 
-                        style: TextStyle(
-                                  fontFamily: font, 
-                                  fontSize: size,
-                                  fontWeight: weight,
-                                  color: color
-                                ),
-                  )
-           ]
+        Text(
+          text, 
+          textAlign: textAlign,
+          style: TextStyle(
+            fontFamily: font, 
+            fontSize: size,
+            fontWeight: weight,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2
+              ..color = borderColor,
+          )
+        ),
+        Text(
+          text, 
+          style: TextStyle(
+            fontFamily: font, 
+            fontSize: size,
+            fontWeight: weight,
+            color: color
+          ),
+        )
+      ]
     );
   }
 }
@@ -108,8 +116,25 @@ class CustomSwitch extends StatelessWidget {
 class OurAppBar extends AppBar {
 
   final String textTitle;
+  final String textSubtitle;
+  final double sizeTitle;
+  final double sizeSubtitle;
+  final Color textColor;
+  final FontWeight titleFontWeight;
+  final FontWeight subtitleFontWeight;
+  final Color backgroundColor;
 
-  OurAppBar({super.key, required this.textTitle});
+  OurAppBar({
+    super.key, 
+    required this.textTitle, 
+    this.textSubtitle = '',
+    this.sizeTitle = 18, 
+    this.sizeSubtitle = 12, 
+    this.textColor = Colors.white, 
+    this.titleFontWeight = FontWeight.bold, 
+    this.subtitleFontWeight = FontWeight.bold,
+    this.backgroundColor = const Color.fromARGB(171, 62, 150, 62)
+  });
 
   @override
   State<OurAppBar> createState() => _OurAppBarState();
@@ -117,15 +142,39 @@ class OurAppBar extends AppBar {
 
 class _OurAppBarState extends State<OurAppBar> {
 
-  get text => widget.textTitle;
+  get text1 => widget.textTitle;
+  get text2 => widget.textSubtitle;
+  get size1 => widget.sizeTitle;
+  get size2 => widget.sizeSubtitle;
+  get color => widget.textColor;
+  get weight1 => widget.titleFontWeight;
+  get weight2 => widget.subtitleFontWeight;
+  get background => widget.backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        title: TextWithBorder(text: text, font: 'crash-a-like', size: 60, color: const Color.fromARGB(196, 0, 255, 166)),
-        backgroundColor: AppController.instance.isDarkTheme
-         ? const Color.fromARGB(255, 57, 202, 93)
-         : const Color.fromARGB(255, 0, 245, 114),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextWithBorder(
+              text: text1, 
+              size: size1, 
+              color: color,
+              weight: weight1,
+            ),
+            if(text2.isNotEmpty)
+              TextWithBorder(
+                text: text2, 
+                size: size2,
+                color: color,
+                weight: weight2,
+              )
+          ]
+        ),
+        backgroundColor: background
+        //  ? const Color.fromARGB(171, 62, 150, 62)
+        //  : const Color.fromARGB(255, 0, 245, 114),
       );
   }
 }

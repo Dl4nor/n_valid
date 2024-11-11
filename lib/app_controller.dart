@@ -48,8 +48,8 @@ class AppController extends ChangeNotifier{
     Navigator.of(context).pushReplacementNamed('/');
   }
 
-  String? controllerStoreName;
-  String? controllerCNPJ;
+  static String? controllerStoreName;
+  static String? controllerCNPJ;
   setStore(storeName, CNPJ){
     controllerStoreName = storeName;
     controllerCNPJ = CNPJ;
@@ -78,9 +78,47 @@ class AppController extends ChangeNotifier{
     return null;
   }
 
+  Future<Map<String, List<DocumentSnapshot>>> defineCategory() async{
+    try{
+      CollectionReference storageCollection = FirebaseFirestore.instance.collection('Storage');
+      QuerySnapshot storage = await storageCollection.where('CNPJ', isEqualTo: AppController.controllerCNPJ).get();
+      DateTime now = DateTime.now();
+
+      Map<String, List<DocumentSnapshot>> categorizedStorage = {
+        'danger': [],
+        'caution': [],
+        'fine': []
+      };
+
+      for(var doc in storage.docs){
+        DateTime expirationDate = doc['dateExpiration'].toDate();
+        DateTime entryDate = doc['dateEntry'].toDate();
+
+        int daysToExpiration = expirationDate.difference(now).inDays;
+        int totalDays = expirationDate.difference(entryDate).inDays;
+
+        if (daysToExpiration < (totalDays/4)) {
+          categorizedStorage['danger']!.add(doc);
+        } else if (daysToExpiration >= (totalDays/4) && daysToExpiration < (totalDays/2)) {
+          categorizedStorage['caution']!.add(doc);
+        } else {
+          categorizedStorage['fine']!.add(doc);
+        }
+      }
+      return categorizedStorage;
+    } catch(e){
+      print('Erro ao tentar carregar documentos: $e');
+      return {
+        'danger': [],
+        'caution': [],
+        'fine': []
+      };
+    }
+  }
+
   Future<DocumentSnapshot?> loadStorageData() async{
-    CollectionReference Storage = FirebaseFirestore.instance.collection('Storage');
-    QuerySnapshot querySnapshot = await Storage.where('CNPJ',isEqualTo: controllerCNPJ).get();
+    CollectionReference storage = FirebaseFirestore.instance.collection('Storage');
+    QuerySnapshot querySnapshot = await storage.where('CNPJ',isEqualTo: controllerCNPJ).get();
 
     if(querySnapshot.docs.isNotEmpty){
       final storageData = querySnapshot.docs.first;
@@ -163,8 +201,6 @@ class AppController extends ChangeNotifier{
     return null;
   }
 
-  TextEditingController barcodeController = TextEditingController();
-
   Future<String> OpenScanner(BuildContext context) async {
     String? code;
 
@@ -178,7 +214,6 @@ class AppController extends ChangeNotifier{
               final barcode = barcodeCapture.barcodes.first;
               if (barcode.rawValue != null) {
                 code = barcode.rawValue!;
-                barcodeController.text = code!;
                 Navigator.of(context).pop();
               }
             },
