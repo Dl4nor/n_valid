@@ -219,6 +219,29 @@ class _OurDrawerState extends State<OurDrawer> {
     }
   }
 
+  void deleteStore(String CNPJ) async{
+    final queryStore = await FirebaseFirestore.instance.collection('Stores').where('CNPJ', isEqualTo: CNPJ).get();
+    final storeData = queryStore.docs.toList().first;
+    final queryEmployee = await FirebaseFirestore.instance.collection('Users').where('CNPJ', arrayContains: storeData['CNPJ']).get();
+    final employeeList = queryEmployee.docs.toList();
+    final queryStorage = await FirebaseFirestore.instance.collection('Storage').where('CNPJ', isEqualTo: storeData['CNPJ']).get();
+    final productList = queryStorage.docs.toList();
+
+    for(var employee in employeeList){
+      await FirebaseFirestore.instance.collection('Users').doc(employee.id).update(
+        {
+          'CNPJ': FieldValue.arrayRemove([storeData['CNPJ']]),
+          'store': FieldValue.arrayRemove([storeData['store']])
+        }
+      );
+    }
+    for(var product in productList){
+      await FirebaseFirestore.instance.collection('Storage').doc(product.id).delete();
+    }
+    
+    FirebaseFirestore.instance.collection('Stores').doc(storeData.id).delete();
+  }
+
   Future<void> logout() async{
     Uname = null;
     name = null; 
@@ -344,12 +367,46 @@ class _OurDrawerState extends State<OurDrawer> {
                                 border: Border.symmetric(horizontal: BorderSide(width: 2)),
                                 borderRadius: BorderRadius.circular(10)
                               ),
-                              child: ListTile(
-                                title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(8, 12)}', textAlign: TextAlign.center),
-                                onTap: () {
-                                  AppController.instance.setStore(stores![i], userCNPJ![i]);
-                                  Navigator.of(context).pushReplacementNamed('/storage');
+                              child: GestureDetector(
+                                onLongPressStart: (details) async{
+                                  final selectedOption = await showMenu<String>(
+                                  context: context,
+                                  position: RelativeRect.fromLTRB(
+                                    details.globalPosition.dx-200,
+                                    details.globalPosition.dy,
+                                    details.globalPosition.dx,
+                                    details.globalPosition.dy
+                                  ),
+                                  items: [
+                                      const PopupMenuItem(
+                                        value: 'excluir',
+                                        child:  Row(
+                                          children: [
+                                            Icon(Icons.delete, color: Colors.red),
+                                            SizedBox(width: 10),
+                                            Text("Deletar loja", style: TextStyle(color: Colors.red)),
+                                          ],
+                                        )
+                                      ),
+                                  ]
+                                  
+                                );
+                                switch (selectedOption) {
+                                  case 'excluir':
+                                    setState(() {
+                                      deleteStore(userCNPJ![i]);
+                                      Navigator.of(context).pushNamed('/home');
+                                    });
+                                    break;
+                                }
                                 },
+                                child: ListTile(
+                                  title: Text('${stores![i]} - ${userCNPJ![i].toString().substring(8, 12)}', textAlign: TextAlign.center),
+                                  onTap: () {
+                                    AppController.instance.setStore(stores![i], userCNPJ![i]);
+                                    Navigator.of(context).pushReplacementNamed('/storage');
+                                  },
+                                ),
                               ),
                             ),
                             ListTile(

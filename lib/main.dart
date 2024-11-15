@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Validad',
       home: AppWidget(), // Aqui você pode apontar para a sua página inicial
       // Adicione outras configurações, como rotas, se necessário

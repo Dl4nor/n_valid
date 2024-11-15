@@ -115,9 +115,9 @@ class _ManagementPageState extends State<ManagementPage> {
             ),
             SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async{
                 if(nomeFuncionario.isNotEmpty && telFuncionario.isNotEmpty){
-                  detectUsername(nomeFuncionario, telFuncionario);
+                  await detectUsername(nomeFuncionario, telFuncionario);
 
                   bool isEmployee = userNameSnapshot!.docs.where((doc) => doc['CNPJ'] == storeData?['CNPJ']).toList().isNotEmpty;
 
@@ -456,53 +456,45 @@ class _ManagementPageState extends State<ManagementPage> {
                           ),
                           items: [
                             if(!storeData!['managers'].contains(doc['userName']))
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'promover',
-                                child:  Container(
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.group_add),
-                                      SizedBox(width: 10),
-                                      Text("Fornecer gerência"),
-                                    ],
-                                  ),
+                                child:  Row(
+                                  children: [
+                                    Icon(Icons.group_add),
+                                    SizedBox(width: 10),
+                                    Text("Fornecer gerência"),
+                                  ],
                                 )
                               ) else
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'rebaixar',
-                                child:  Container(
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.group_remove, color: Colors.red),
-                                      SizedBox(width: 10),
-                                      Text("Retirar gerência", style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
+                                child:  Row(
+                                  children: [
+                                    Icon(Icons.group_remove, color: Colors.red),
+                                    SizedBox(width: 10),
+                                    Text("Retirar gerência", style: TextStyle(color: Colors.red)),
+                                  ],
                                 )
                               ),
                             if(doc['userName'] == currenteUserData!['userName'])
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'sair',
-                                child:  Container(
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.group_remove, color: Colors.red),
-                                      SizedBox(width: 10),
-                                      Text("Sair da loja", style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
+                                child:  Row(
+                                  children: [
+                                    Icon(Icons.group_remove, color: Colors.red),
+                                    SizedBox(width: 10),
+                                    Text("Sair da loja", style: TextStyle(color: Colors.red)),
+                                  ],
                                 )
                               ) else
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'excluir',
-                                child:  Container(
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.group_remove, color: Colors.red),
-                                      SizedBox(width: 10),
-                                      Text("Retirar da loja", style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
+                                child:  Row(
+                                  children: [
+                                    Icon(Icons.group_remove, color: Colors.red),
+                                    SizedBox(width: 10),
+                                    Text("Retirar da loja", style: TextStyle(color: Colors.red)),
+                                  ],
                                 )
                               ),
                           ]
@@ -621,7 +613,6 @@ class _ManagementPageState extends State<ManagementPage> {
                                   )
                                 ]
                                 : [],
-                              
                             ),
                           ],
                         ),

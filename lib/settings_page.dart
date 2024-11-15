@@ -50,18 +50,18 @@ class SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(getChooseLanguageText(currentLanguage), style: const TextStyle(fontSize: 18)), // Usando texto traduzido
-            DropdownButton<String>(
-              value: getLanguageName(currentLanguage), // Corrigido para usar o nome do idioma
-              items: languageCodes.keys.map((String lang) {
-                return DropdownMenuItem<String>(
-                  value: lang,
-                  child: Text(getTranslatedLanguageName(lang)), // Usando texto traduzido para as opções
-                );
-              }).toList(),
-              onChanged: onLanguageChanged,
-            ),
-            Container(height: 20,),
+            // Text(getChooseLanguageText(currentLanguage), style: const TextStyle(fontSize: 18)), // Usando texto traduzido
+            // DropdownButton<String>(
+            //   value: getLanguageName(currentLanguage), // Corrigido para usar o nome do idioma
+            //   items: languageCodes.keys.map((String lang) {
+            //     return DropdownMenuItem<String>(
+            //       value: lang,
+            //       child: Text(getTranslatedLanguageName(lang)), // Usando texto traduzido para as opções
+            //     );
+            //   }).toList(),
+            //   onChanged: onLanguageChanged,
+            // ),
+            // Container(height: 20,),
             Text(getThemeLanguageText(currentLanguage), style: const TextStyle(fontSize: 18),),
             const CustomSwitch(),
           ],
