@@ -378,6 +378,9 @@ class _OurDrawerState extends State<OurDrawer> {
                                     details.globalPosition.dy
                                   ),
                                   items: [
+                                      if(FirebaseFirestore.instance
+                                        .collection('Stores')
+                                        .where('managers', arrayContains: userData!['userName']).toString().isNotEmpty)
                                       const PopupMenuItem(
                                         value: 'excluir',
                                         child:  Row(

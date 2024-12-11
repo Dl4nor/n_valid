@@ -17,9 +17,9 @@ class _StoragePageState extends State<StoragePage> {
   int isPressed = 0;
   List<bool> pressed = [true, false, false];
   List<String> textCategory = [
-    "❗Danger", 
-    "⚠️Caution", 
-    "✅Fine"
+    "❗Rebaixa", 
+    "⚠️Atenção", 
+    "✅Seguro"
   ];
   List<Color> pressedColors = [
     Colors.red,
@@ -36,6 +36,7 @@ class _StoragePageState extends State<StoragePage> {
   Timestamp timestampYesterday = Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1)));
   String storeCNPJ = AppController.controllerCNPJ!;
   String storeName = AppController.controllerStoreName!;
+  File? productImageFile;
   Map<String, dynamic> product = {};
   FocusNode searchFocusNode = FocusNode(); 
 
@@ -132,12 +133,13 @@ class _StoragePageState extends State<StoragePage> {
     });
   }
 
-  Future<File?> pickImage(Function setStateDialog) async {
+  Future<void> pickImage(Function setStateDialog) async {
     final File? image = await AppController.instance.pickImage(context);
     if (image != null) {
-      return image;
+      setStateDialog((){
+        productImageFile = image;
+      });
     }
-    return null;
   }
 
   Map<String, String> validateProduct() {
@@ -214,7 +216,6 @@ class _StoragePageState extends State<StoragePage> {
     TextEditingController barcodeController = TextEditingController();
     TextEditingController nameController = TextEditingController();
     TextEditingController amountController = TextEditingController();
-    File? productImageFile;
     ImageProvider<Object>? productImageStorage = isRegister
                                 ? null
                                 : product['imageURL'].isNotEmpty
@@ -223,6 +224,7 @@ class _StoragePageState extends State<StoragePage> {
     barcodeController.text = product['barcode'];
     nameController.text = product['name'];
     amountController.text = product['amount'].toString();
+    productImageFile = isRegister ? null : productImageFile;
 
     return StatefulBuilder(builder: (context, setStateDialog){
       return AlertDialog(
@@ -253,8 +255,8 @@ class _StoragePageState extends State<StoragePage> {
                       side: const BorderSide(color: Color.fromARGB(255, 0, 255, 47))
                     )
                   ),
-                  onPressed: () async{
-                    productImageFile = await pickImage(setStateDialog);
+                  onPressed: (){
+                    pickImage(setStateDialog);
                   }, 
                   child: productImageFile == null && productImageStorage == null
                   ? const Icon(
@@ -916,7 +918,7 @@ class _SlideButton extends StatelessWidget {
                     ? Colors.white 
                     : Colors.black, 
             fontWeight: FontWeight.bold,
-            fontSize: 15
+            fontSize: 14
           )
         )
       ),

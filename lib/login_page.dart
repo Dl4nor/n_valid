@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:n_valid/app_controller.dart';
 import 'package:n_valid/app_widget.dart';
@@ -13,12 +14,21 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  
+
+  Future<void> getToken() async {
+    try{
+      String? token = await FirebaseMessaging.instance.getToken();
+      print("token do dispositivo: $token");
+    }catch(e){
+      print("Erro ao capturar token: $e");
+    }
+  }
   String errorMessage = '';
   String email = '';
   String password = '';
 
   Widget _body(){
+    getToken();
       // Obtém o idioma atual do LanguageProvider
     String currentLanguage = Provider.of<LanguageProvider>(context).selectedLanguage;
 
