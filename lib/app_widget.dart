@@ -369,6 +369,7 @@ class _OurDrawerState extends State<OurDrawer> {
                               ),
                               child: GestureDetector(
                                 onLongPressStart: (details) async{
+                                  HapticFeedback.lightImpact();
                                   final selectedOption = await showMenu<String>(
                                   context: context,
                                   position: RelativeRect.fromLTRB(
@@ -380,7 +381,7 @@ class _OurDrawerState extends State<OurDrawer> {
                                   items: [
                                       if(FirebaseFirestore.instance
                                         .collection('Stores')
-                                        .where('managers', arrayContains: userData!['userName']).toString().isNotEmpty)
+                                        .where('managers', arrayContains: userData?['userName']).toString().isNotEmpty)
                                       const PopupMenuItem(
                                         value: 'excluir',
                                         child:  Row(
